@@ -561,6 +561,8 @@ export default function AdSimulator() {
     const unsub = onSnapshot(collection(db, "adminAds"), snap => {
       setAdminAds(snap.docs.map(d => ({ id: d.id, ...d.data() })));
       setAdminAdsLoaded(true);
+    }, err => {
+      console.error("adminAds read failed:", err.message);
     });
     return () => unsub();
   }, []);
@@ -773,8 +775,12 @@ export default function AdSimulator() {
       cta: cta.trim(),
       createdAt: new Date().toISOString(),
     };
-    await setDoc(doc(db, "adminAds", id), ad);
-    // onSnapshot updates adminAds state automatically
+    try {
+      await setDoc(doc(db, "adminAds", id), ad);
+    } catch (err) {
+      setFormError(`// failed to save: ${err.message}`);
+      return;
+    }
     setNewAd(BLANK_AD);
     setVideoUploadState("idle");
     setAdminView("ads");
@@ -788,13 +794,18 @@ export default function AdSimulator() {
     }
     setFormError("");
     const existing = adminAds.find(a => a.id === editingAdId);
-    await setDoc(doc(db, "adminAds", editingAdId), {
-      ...existing,
-      ...newAd,
-      brand: brand.trim(),
-      tagline: tagline.trim(),
-      cta: cta.trim(),
-    });
+    try {
+      await setDoc(doc(db, "adminAds", editingAdId), {
+        ...existing,
+        ...newAd,
+        brand: brand.trim(),
+        tagline: tagline.trim(),
+        cta: cta.trim(),
+      });
+    } catch (err) {
+      setFormError(`// failed to save: ${err.message}`);
+      return;
+    }
     setEditingAdId(null);
     setNewAd(BLANK_AD);
     setVideoUploadState("idle");
