@@ -218,7 +218,7 @@ const styles = `
   .preview-cta { font-size: 0.78rem; font-weight: 800; padding: 0.35rem 0.9rem; border-radius: 8px; color: #fff; }
 
   /* ── AD VIDEO ── */
-  .ad-video { width: 100%; height: auto; display: block; max-height: 65vh; object-fit: contain; background: #000; }
+  .ad-video { width: 100%; height: auto; min-height: 180px; display: block; max-height: 65vh; object-fit: contain; background: #000; }
   .video-badge { font-family: 'Nunito', sans-serif; font-size: 0.65rem; font-weight: 700; color: #4ade80; background: #4ade8015; border: 1px solid #4ade8033; padding: 0.15rem 0.5rem; border-radius: 999px; }
   .preview-video { width: 100%; max-height: 140px; object-fit: cover; background: #000; display: block; }
 
@@ -1449,7 +1449,7 @@ export default function AdSimulator() {
             {(() => {
               const rar = isAdminAd ? (RARITY_MAP[currentAd.rarity || "common"]) : null;
               return (
-            <div className={`ad-card ${isAdminAd ? "is-admin" : ""}`} style={{ ...(rar ? getRarityStyle(rar.key) : {}), ...(adVideoSize ? { maxWidth: Math.round(Math.min(Math.max(window.innerHeight * 0.65 * (adVideoSize.w / adVideoSize.h), 300), window.innerWidth * 0.92, 640)) } : {}) }}>
+            <div className={`ad-card ${isAdminAd ? "is-admin" : ""}`} style={{ ...(rar ? getRarityStyle(rar.key) : {}), ...(adVideoSize?.w && adVideoSize?.h ? { maxWidth: Math.round(Math.min(Math.max(window.innerHeight * 0.65 * (adVideoSize.w / adVideoSize.h), 300), window.innerWidth * 0.92, 640)) } : {}) }}>
               {rar?.sparkle && <RaritySparkles color={rar.color} large />}
               <div className={`ad-tag ${isAdminAd ? "admin" : ""}`} style={rar && rar.key !== "common" ? { color: rar.color, borderColor: rar.color + "44" } : {}}>
                 {isAdminAd ? rar.label.toUpperCase() + " AD" : "ADVERTISEMENT"}
