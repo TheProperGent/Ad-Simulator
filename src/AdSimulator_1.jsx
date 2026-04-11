@@ -3,12 +3,12 @@ import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut as firebaseSignOut } from "firebase/auth";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyD1mep5O4eztVl3XsWNknr4-SuWlHB8Sio",
-  authDomain: "ad-simulator-webapp.firebaseapp.com",
-  projectId: "ad-simulator-webapp",
-  storageBucket: "ad-simulator-webapp.firebasestorage.app",
-  messagingSenderId: "329421712510",
-  appId: "1:329421712510:web:7f640771ff2d5e276cfc2f",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 const firebaseApp = initializeApp(firebaseConfig);
 const auth = getAuth(firebaseApp);
