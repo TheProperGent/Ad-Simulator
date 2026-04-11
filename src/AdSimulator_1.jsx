@@ -196,14 +196,14 @@ const styles = `
   .preview-cta { font-size: 0.75rem; font-weight: 700; padding: 0.35rem 0.9rem; border-radius: 2px; color: #fff; }
 
   /* ── AD VIDEO ── */
-  .ad-video { width: 100%; display: block; max-height: 220px; object-fit: cover; background: #000; }
+  .ad-video { width: 100%; height: auto; display: block; max-height: 65vh; object-fit: contain; background: #000; }
   .video-badge { font-family: 'JetBrains Mono', monospace; font-size: 0.55rem; color: #4ade80; border: 1px solid #4ade8044; padding: 0.15rem 0.4rem; border-radius: 2px; letter-spacing: 0.08em; }
   .preview-video { width: 100%; max-height: 140px; object-fit: cover; background: #000; display: block; }
 
   /* ── AD MODAL ── */
   .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.88); backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; z-index: 100; animation: fadeIn 0.2s ease; padding: 1rem; }
   @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-  .ad-card { background: #111; border: 1px solid #222; border-radius: 2px; width: 100%; max-width: 460px; overflow: hidden; animation: scaleIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1); position: relative; }
+  .ad-card { background: #111; border: 1px solid #222; border-radius: 2px; width: 100%; max-width: 460px; overflow: hidden; animation: scaleIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1); position: relative; transition: max-width 0.2s ease; }
   .ad-card.is-admin { border-color: #fbbc0444; }
   @keyframes scaleIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
   .ad-tag { position: absolute; top: 0.75rem; right: 0.75rem; font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; letter-spacing: 0.1em; color: #555; border: 1px solid #2a2a2a; padding: 0.2rem 0.5rem; border-radius: 2px; }
@@ -329,6 +329,7 @@ export default function AdSimulator() {
   const [cleanupResult, setCleanupResult] = useState(null);
   const [storageReady, setStorageReady] = useState(false);
   const [videoUploadState, setVideoUploadState] = useState("idle"); // "idle" | "uploading" | "error"
+  const [adVideoSize, setAdVideoSize] = useState(null); // { w, h } natural video dimensions
 
   const currentAdRef = useRef(null);
   const isAdminAdRef = useRef(false);
@@ -437,6 +438,7 @@ export default function AdSimulator() {
     setIsNewCollect(false);
     setProgress(0);
     setCountdown(ad.videoUrl ? null : 5);
+    setAdVideoSize(null);
     setAdState("running");
   };
 
@@ -1022,7 +1024,7 @@ export default function AdSimulator() {
             {(() => {
               const rar = isAdminAd ? (RARITY_MAP[currentAd.rarity || "common"]) : null;
               return (
-            <div className={`ad-card ${isAdminAd ? "is-admin" : ""}`} style={rar ? getRarityStyle(rar.key) : {}}>
+            <div className={`ad-card ${isAdminAd ? "is-admin" : ""}`} style={{ ...(rar ? getRarityStyle(rar.key) : {}), ...(adVideoSize ? { maxWidth: Math.round(Math.min(Math.max(window.innerHeight * 0.65 * (adVideoSize.w / adVideoSize.h), 300), window.innerWidth * 0.92, 640)) } : {}) }}>
               {rar?.sparkle && <RaritySparkles color={rar.color} />}
               <div className={`ad-tag ${isAdminAd ? "admin" : ""}`} style={rar && rar.key !== "common" ? { color: rar.color, borderColor: rar.color + "44" } : {}}>
                 {isAdminAd ? rar.label.toUpperCase() + " AD" : "ADVERTISEMENT"}
@@ -1038,6 +1040,7 @@ export default function AdSimulator() {
                     adDurationRef.current = e.target.duration * 1000;
                     adStartRef.current = Date.now();
                     setCountdown(Math.ceil(e.target.duration));
+                    setAdVideoSize({ w: e.target.videoWidth, h: e.target.videoHeight });
                   }}
                 />
               ) : (
