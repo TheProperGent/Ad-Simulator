@@ -19,10 +19,34 @@
     a { color: #e63c3c; text-decoration: none; }
     a:hover { text-decoration: underline; }
 
+    .outer-wrap {
+      display: flex;
+      align-items: flex-start;
+      gap: 1.5rem;
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 0 1rem;
+    }
+    .ad-sidebar {
+      width: 160px;
+      flex-shrink: 0;
+      position: sticky;
+      top: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+    .ad-sidebar ins { display: block; }
     .page-wrap {
+      flex: 1;
+      min-width: 0;
       max-width: 780px;
       margin: 0 auto;
       padding: 3rem 2rem 6rem;
+    }
+    @media (max-width: 1000px) {
+      .ad-sidebar { display: none; }
+      .outer-wrap { padding: 0; }
     }
 
     /* Header */
@@ -207,6 +231,18 @@
     <a href="/" class="nav-link">Launch App →</a>
   </header>
 
+  <div class="outer-wrap">
+
+    <!-- Left sidebar ad -->
+    <aside class="ad-sidebar">
+      <ins class="adsbygoogle"
+           style="display:block;width:160px;height:600px"
+           data-ad-client="ca-pub-3769557613296773"
+           data-ad-slot="8872751959"
+           data-ad-format="fixed"></ins>
+      <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+    </aside>
+
   <div class="page-wrap">
 
     <div class="hero">
@@ -349,6 +385,18 @@
     </div>
 
   </div>
+
+    <!-- Right sidebar ad -->
+    <aside class="ad-sidebar">
+      <ins class="adsbygoogle"
+           style="display:block;width:160px;height:600px"
+           data-ad-client="ca-pub-3769557613296773"
+           data-ad-slot="8872751959"
+           data-ad-format="fixed"></ins>
+      <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+    </aside>
+
+  </div><!-- /outer-wrap -->
 
   <footer>
     © Ad Simulator · All rights reserved · The credits are not redeemable · This is not a disclaimer, it is a boast

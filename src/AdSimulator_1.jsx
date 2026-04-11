@@ -1314,19 +1314,27 @@ export default function AdSimulator() {
                     <div className="hiw-steps">
                       <div className="hiw-step">
                         <div className="hiw-step-num">1</div>
-                        <div className="hiw-step-text">Press <strong>RUN AD</strong>. An advertisement plays. You watch it. This is the core of the experience.</div>
+                        <div className="hiw-step-text">Sign in with your Google account. This lets us track your credits, collection, and stats across devices. We promise not to do anything weird with it. Probably.</div>
                       </div>
                       <div className="hiw-step">
                         <div className="hiw-step-num">2</div>
-                        <div className="hiw-step-text">Earn <strong>1 credit</strong> per ad watched. Credits accumulate across sessions. Credits cannot be spent or redeemed. They are a number that goes up.</div>
+                        <div className="hiw-step-text">Press <strong>RUN AD</strong>. An advertisement plays. You watch it to completion. This is, in its entirety, the core gameplay loop.</div>
                       </div>
                       <div className="hiw-step">
                         <div className="hiw-step-num">3</div>
-                        <div className="hiw-step-text">Each ad has a <strong>rarity tier</strong> — rolled on every impression. Rarer ads trigger escalating visual effects and are added to your collection.</div>
+                        <div className="hiw-step-text">Earn <strong>1 credit</strong> per ad watched. Credits accumulate across sessions and are permanently saved to your account. Credits cannot be spent, redeemed, or exchanged for anything of value. They are a number. The number goes up. This is sufficient.</div>
                       </div>
                       <div className="hiw-step">
                         <div className="hiw-step-num">4</div>
-                        <div className="hiw-step-text">Compete on the <strong>global leaderboard</strong> for credits earned, ads collected, and rarest finds. The prize is being at the top of the leaderboard.</div>
+                        <div className="hiw-step-text">Each ad is assigned a <strong>rarity tier</strong>, rolled fresh on every impression. Common ads appear 90% of the time. Mythic ads appear 0.0001% of the time. When you land a rare ad, the screen celebrates. You have won nothing. It will feel like you have won something.</div>
+                      </div>
+                      <div className="hiw-step">
+                        <div className="hiw-step-num">5</div>
+                        <div className="hiw-step-text">Every ad you collect is saved to your <strong>Collection</strong> tab. First discoveries trigger a special overlay. Duplicate copies stack with a ×2, ×3 badge. You are, functionally, collecting advertisements. This was someone's idea and they were very pleased with it.</div>
+                      </div>
+                      <div className="hiw-step">
+                        <div className="hiw-step-num">6</div>
+                        <div className="hiw-step-text">The <strong>Leaderboard</strong> ranks all users globally by lifetime credits, total ads collected, unique ads found, and rarest tier reached. There is no prize for first place. There is only first place. Several people are competing for it right now.</div>
                       </div>
                     </div>
                     <div className="hiw-rarity-row">
@@ -1335,6 +1343,10 @@ export default function AdSimulator() {
                           {r.label} {r.chance}%
                         </span>
                       ))}
+                    </div>
+                    <div className="hiw-disclaimer" style={{ marginTop: "0.5rem" }}>
+                      // rarity odds are live — pulled directly from the same table the game uses.<br/>
+                      // yes, mythic is really 0.0001%. yes, people are still trying for it.
                     </div>
                   </div>
                 </div>
