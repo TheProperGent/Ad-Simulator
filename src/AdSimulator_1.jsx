@@ -278,6 +278,8 @@ export default function AdSimulator() {
   const [adminView, setAdminView] = useState("ads");
   const [newAd, setNewAd] = useState(BLANK_AD);
   const [formError, setFormError] = useState("");
+  const [cleanupState, setCleanupState] = useState("idle"); // "idle" | "running" | "done"
+  const [cleanupResult, setCleanupResult] = useState(null);
   const [storageReady, setStorageReady] = useState(false);
   const [videoUploadState, setVideoUploadState] = useState("idle"); // "idle" | "uploading" | "error"
 
@@ -451,6 +453,25 @@ export default function AdSimulator() {
     setNewAd(BLANK_AD);
     setVideoUploadState("idle");
     setAdminView("ads");
+  };
+
+  const cleanupOrphanedVideos = async () => {
+    setCleanupState("running");
+    setCleanupResult(null);
+    const keepUrls = adminAds.map(a => a.videoUrl).filter(Boolean);
+    try {
+      const res = await fetch(`${WORKER_URL}/cleanup`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ keepUrls }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Cleanup failed");
+      setCleanupResult(data.deleted);
+    } catch (err) {
+      setCleanupResult(`error: ${err.message}`);
+    }
+    setCleanupState("done");
   };
 
   const cleanupPendingVideo = async (videoUrl) => {
@@ -763,6 +784,26 @@ export default function AdSimulator() {
                   <div className="form-actions">
                     <button className="btn-create" onClick={createAdminAd} disabled={videoUploadState === "uploading"} style={{ opacity: videoUploadState === "uploading" ? 0.5 : 1, cursor: videoUploadState === "uploading" ? "not-allowed" : "pointer" }}>PUBLISH AD</button>
                     <button className="btn-cancel" onClick={() => { cleanupPendingVideo(newAd.videoUrl); setAdminView("ads"); setFormError(""); setVideoUploadState("idle"); }}>CANCEL</button>
+                  </div>
+
+                  <div style={{ marginTop: "2rem", paddingTop: "1.5rem", borderTop: "1px solid #1a1a1a" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "1rem", flexWrap: "wrap" }}>
+                      <button
+                        className="btn-cancel"
+                        onClick={() => { setCleanupResult(null); cleanupOrphanedVideos(); }}
+                        disabled={cleanupState === "running"}
+                        style={{ opacity: cleanupState === "running" ? 0.5 : 1, cursor: cleanupState === "running" ? "not-allowed" : "pointer", whiteSpace: "nowrap" }}
+                      >
+                        {cleanupState === "running" ? "SCANNING…" : "🗑 PURGE ORPHANED VIDEOS"}
+                      </button>
+                      {cleanupResult !== null && (
+                        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "0.65rem", color: typeof cleanupResult === "number" ? (cleanupResult > 0 ? "#4ade80" : "#555") : "#e63c3c" }}>
+                          {typeof cleanupResult === "number"
+                            ? cleanupResult > 0 ? `// ${cleanupResult} orphaned file${cleanupResult !== 1 ? "s" : ""} removed` : "// no orphaned files found"
+                            : `// ${cleanupResult}`}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}
