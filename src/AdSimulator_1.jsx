@@ -556,9 +556,11 @@ export default function AdSimulator() {
   }, [users, storageReady]);
 
   // ── Real-time admin ads listener (Firestore) ──
+  const [adminAdsLoaded, setAdminAdsLoaded] = useState(false);
   useEffect(() => {
     const unsub = onSnapshot(collection(db, "adminAds"), snap => {
       setAdminAds(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      setAdminAdsLoaded(true);
     });
     return () => unsub();
   }, []);
@@ -1197,8 +1199,8 @@ export default function AdSimulator() {
                       <button
                         className="btn-cancel"
                         onClick={() => { setCleanupResult(null); cleanupOrphanedVideos(); }}
-                        disabled={cleanupState === "running"}
-                        style={{ opacity: cleanupState === "running" ? 0.5 : 1, cursor: cleanupState === "running" ? "not-allowed" : "pointer", whiteSpace: "nowrap" }}
+                        disabled={cleanupState === "running" || !adminAdsLoaded}
+                        style={{ opacity: (cleanupState === "running" || !adminAdsLoaded) ? 0.5 : 1, cursor: (cleanupState === "running" || !adminAdsLoaded) ? "not-allowed" : "pointer", whiteSpace: "nowrap" }}
                       >
                         {cleanupState === "running" ? "SCANNING…" : "🗑 PURGE ORPHANED VIDEOS"}
                       </button>
