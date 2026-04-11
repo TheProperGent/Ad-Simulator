@@ -453,7 +453,31 @@ export default function AdSimulator() {
     setAdminView("ads");
   };
 
-  const deleteAdminAd = (id) => setAdminAds(prev => prev.filter(a => a.id !== id));
+  const cleanupPendingVideo = async (videoUrl) => {
+    if (videoUrl?.includes(".r2.dev/")) {
+      try {
+        await fetch(`${WORKER_URL}/delete`, {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: videoUrl }),
+        });
+      } catch {}
+    }
+  };
+
+  const deleteAdminAd = async (id) => {
+    const ad = adminAds.find(a => a.id === id);
+    if (ad?.videoUrl?.includes(".r2.dev/")) {
+      try {
+        await fetch(`${WORKER_URL}/delete`, {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: ad.videoUrl }),
+        });
+      } catch {}
+    }
+    setAdminAds(prev => prev.filter(a => a.id !== id));
+  };
 
   const uploadVideoToR2 = async (file) => {
     const MAX_BYTES = 200 * 1024 * 1024;
@@ -567,13 +591,13 @@ export default function AdSimulator() {
             <div className="tabs">
               <button
                 className={`tab-btn admin-tab ${adminView === "ads" ? "active" : ""}`}
-                onClick={() => setAdminView("ads")}
+                onClick={() => { cleanupPendingVideo(newAd.videoUrl); setAdminView("ads"); }}
               >
                 Ad Library<span className="tab-count">({adminAds.length})</span>
               </button>
               <button
                 className={`tab-btn admin-tab ${adminView === "create" ? "active" : ""}`}
-                onClick={() => { setAdminView("create"); setFormError(""); setNewAd(BLANK_AD); }}
+                onClick={() => { cleanupPendingVideo(newAd.videoUrl); setAdminView("create"); setFormError(""); setNewAd(BLANK_AD); }}
               >
                 + Create Ad
               </button>
@@ -738,7 +762,7 @@ export default function AdSimulator() {
 
                   <div className="form-actions">
                     <button className="btn-create" onClick={createAdminAd} disabled={videoUploadState === "uploading"} style={{ opacity: videoUploadState === "uploading" ? 0.5 : 1, cursor: videoUploadState === "uploading" ? "not-allowed" : "pointer" }}>PUBLISH AD</button>
-                    <button className="btn-cancel" onClick={() => { setAdminView("ads"); setFormError(""); setVideoUploadState("idle"); }}>CANCEL</button>
+                    <button className="btn-cancel" onClick={() => { cleanupPendingVideo(newAd.videoUrl); setAdminView("ads"); setFormError(""); setVideoUploadState("idle"); }}>CANCEL</button>
                   </div>
                 </div>
               )}
