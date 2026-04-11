@@ -125,6 +125,18 @@ const styles = `
   .run-btn-text { font-family: 'Nunito', sans-serif; font-size: 1.1rem; font-weight: 800; letter-spacing: 0.08em; color: #fff; text-shadow: 0 1px 8px rgba(0,0,0,0.3); }
   .run-btn-sub { font-family: 'Nunito', sans-serif; font-size: 0.65rem; font-weight: 600; color: rgba(255,255,255,0.55); letter-spacing: 0.08em; text-transform: uppercase; }
   .status-bar { display: flex; align-items: center; gap: 0.75rem; font-family: 'Nunito', sans-serif; font-size: 0.82rem; font-weight: 600; color: #383848; min-height: 1.5rem; }
+  .how-it-works { width: 100%; max-width: 520px; margin: 0 auto; border-top: 1px solid #1a1a22; padding-top: 2rem; display: flex; flex-direction: column; gap: 1.25rem; }
+  .hiw-disclaimer { font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; color: #2a2a38; text-align: center; line-height: 1.6; }
+  .hiw-disclaimer a { color: #383848; text-decoration: underline; }
+  .hiw-disclaimer a:hover { color: #55556a; }
+  .hiw-title { font-family: 'Nunito', sans-serif; font-size: 0.7rem; font-weight: 700; color: #383848; text-transform: uppercase; letter-spacing: 0.12em; text-align: center; }
+  .hiw-steps { display: flex; flex-direction: column; gap: 0.75rem; }
+  .hiw-step { display: flex; align-items: flex-start; gap: 0.85rem; }
+  .hiw-step-num { font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; font-weight: 700; color: #e63c3c; background: #e63c3c12; border: 1px solid #e63c3c22; border-radius: 999px; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+  .hiw-step-text { font-size: 0.82rem; color: #55556a; line-height: 1.5; }
+  .hiw-step-text strong { color: #888; font-weight: 700; }
+  .hiw-rarity-row { display: flex; gap: 0.4rem; flex-wrap: wrap; justify-content: center; }
+  .hiw-rarity-pip { font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; font-weight: 700; padding: 0.15rem 0.5rem; border-radius: 999px; border: 1px solid; }
   .status-dot { width: 7px; height: 7px; border-radius: 50%; background: #383848; flex-shrink: 0; }
   .status-dot.active { background: #4ade80; box-shadow: 0 0 8px #4ade80aa; animation: blink 1s ease-in-out infinite; }
   .status-dot.done { background: #e63c3c; }
@@ -1291,6 +1303,39 @@ export default function AdSimulator() {
                     {adState === "idle" && "ready — waiting for ad request"}
                     {adState === "running" && "serving ad impression…"}
                     {adState === "complete" && "impression complete"}
+                  </div>
+
+                  <div className="how-it-works">
+                    <div className="hiw-disclaimer">
+                      // the following section exists to satisfy an ad network's content requirements.<br/>
+                      // we are aware of the irony. <a href="/about.html" target="_blank">there's more where this came from.</a>
+                    </div>
+                    <div className="hiw-title">How It Works</div>
+                    <div className="hiw-steps">
+                      <div className="hiw-step">
+                        <div className="hiw-step-num">1</div>
+                        <div className="hiw-step-text">Press <strong>RUN AD</strong>. An advertisement plays. You watch it. This is the core of the experience.</div>
+                      </div>
+                      <div className="hiw-step">
+                        <div className="hiw-step-num">2</div>
+                        <div className="hiw-step-text">Earn <strong>1 credit</strong> per ad watched. Credits accumulate across sessions. Credits cannot be spent or redeemed. They are a number that goes up.</div>
+                      </div>
+                      <div className="hiw-step">
+                        <div className="hiw-step-num">3</div>
+                        <div className="hiw-step-text">Each ad has a <strong>rarity tier</strong> — rolled on every impression. Rarer ads trigger escalating visual effects and are added to your collection.</div>
+                      </div>
+                      <div className="hiw-step">
+                        <div className="hiw-step-num">4</div>
+                        <div className="hiw-step-text">Compete on the <strong>global leaderboard</strong> for credits earned, ads collected, and rarest finds. The prize is being at the top of the leaderboard.</div>
+                      </div>
+                    </div>
+                    <div className="hiw-rarity-row">
+                      {RARITIES.map(r => (
+                        <span key={r.key} className="hiw-rarity-pip" style={{ color: r.color, borderColor: r.color + "44", background: r.color + "10" }}>
+                          {r.label} {r.chance}%
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
