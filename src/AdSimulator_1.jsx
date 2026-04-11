@@ -1,4 +1,20 @@
 import { useState, useEffect, useRef } from "react";
+import { initializeApp } from "firebase/app";
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut as firebaseSignOut } from "firebase/auth";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyD1mep5O4eztVl3XsWNknr4-SuWlHB8Sio",
+  authDomain: "ad-simulator-webapp.firebaseapp.com",
+  projectId: "ad-simulator-webapp",
+  storageBucket: "ad-simulator-webapp.firebasestorage.app",
+  messagingSenderId: "329421712510",
+  appId: "1:329421712510:web:7f640771ff2d5e276cfc2f",
+};
+const firebaseApp = initializeApp(firebaseConfig);
+const auth = getAuth(firebaseApp);
+const googleProvider = new GoogleAuthProvider();
+
+const DEBUG = true; // set to false to hide debug accounts in production
 
 const ADMIN_RATE = 0.30;
 
@@ -47,6 +63,9 @@ const styles = `
   .auth-logo { font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.2em; color: #e63c3c; text-transform: uppercase; margin-bottom: 2.5rem; }
   .auth-title { font-size: 2rem; font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; margin-bottom: 0.5rem; }
   .auth-sub { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: #555; margin-bottom: 2.5rem; }
+  .btn-google { display: flex; align-items: center; justify-content: center; gap: 0.75rem; width: 100%; background: #fff; color: #111; border: none; border-radius: 2px; padding: 0.85rem 1rem; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.9rem; cursor: pointer; transition: background 0.15s; margin-bottom: 1.5rem; }
+  .btn-google:hover { background: #f0f0f0; }
+  .btn-google svg { flex-shrink: 0; }
   .user-list { display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 2rem; }
   .user-btn { display: flex; align-items: center; gap: 1rem; background: #181818; border: 1px solid #242424; border-radius: 2px; padding: 0.9rem 1rem; cursor: pointer; transition: all 0.15s; text-align: left; width: 100%; color: #f0ede8; font-family: 'Syne', sans-serif; }
   .user-btn:hover { border-color: #e63c3c; background: #1a1212; }
@@ -310,6 +329,7 @@ function AdSenseUnit() {
 export default function AdSimulator() {
   const [users, setUsers] = useState(DEFAULT_USERS);
   const [currentUser, setCurrentUser] = useState(null);
+  const [firebaseUser, setFirebaseUser] = useState(undefined); // undefined = loading, null = signed out
   const [adminAds, setAdminAds] = useState([]);
   const [userLibrary, setUserLibrary] = useState([]);
   const [newUsername, setNewUsername] = useState("");
@@ -351,6 +371,28 @@ export default function AdSimulator() {
     s.crossOrigin = "anonymous";
     document.head.appendChild(s);
   }, []);
+
+  // ── Firebase auth listener ──
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (fbUser) => {
+      setFirebaseUser(fbUser ?? null);
+      if (fbUser) {
+        // Map Firebase user to app user shape, restoring saved credits
+        const savedCredits = parseInt(localStorage.getItem(`sim_credits_${fbUser.uid}`) || "0", 10);
+        setCurrentUser({
+          id: fbUser.uid,
+          username: fbUser.displayName || fbUser.email?.split("@")[0] || "user",
+          photoURL: fbUser.photoURL || null,
+          credits: savedCredits,
+          isGoogle: true,
+        });
+      } else if (currentUser?.isGoogle) {
+        // Only clear if we were signed in via Google (not debug account)
+        setCurrentUser(null);
+      }
+    });
+    return () => unsub();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Load shared data on mount ──
   useEffect(() => {
@@ -448,8 +490,10 @@ export default function AdSimulator() {
     const user = currentUserRef.current;
     const lib = userLibraryRef.current;
 
-    setUsers(prev => prev.map(u => u.id === user.id ? { ...u, credits: u.credits + 1 } : u));
-    setCurrentUser(prev => ({ ...prev, credits: prev.credits + 1 }));
+    if (!user.isGoogle) setUsers(prev => prev.map(u => u.id === user.id ? { ...u, credits: u.credits + 1 } : u));
+    const newCredits = user.credits + 1;
+    setCurrentUser(prev => ({ ...prev, credits: newCredits }));
+    if (user.isGoogle) try { localStorage.setItem(`sim_credits_${user.id}`, String(newCredits)); } catch {}
     setCreditBump(true);
     setTimeout(() => setCreditBump(false), 800);
 
@@ -485,7 +529,8 @@ export default function AdSimulator() {
     setNewUsername("");
   };
 
-  const signOut = () => {
+  const signOut = async () => {
+    if (currentUser?.isGoogle) await firebaseSignOut(auth);
     setCurrentUser(null);
     setAdState("idle");
     setHistory([]);
@@ -493,6 +538,15 @@ export default function AdSimulator() {
     setView("earn");
     setAdminView("ads");
     clearInterval(intervalRef.current);
+  };
+
+  const signInWithGoogle = async () => {
+    try {
+      await signInWithPopup(auth, googleProvider);
+      // onAuthStateChanged handles setting currentUser
+    } catch (err) {
+      if (err.code !== "auth/popup-closed-by-user") console.error(err);
+    }
   };
 
   const createAdminAd = () => {
@@ -619,36 +673,48 @@ export default function AdSimulator() {
             <div className="auth-card">
               <div className="auth-logo">◉ Ad Simulator</div>
               <h1 className="auth-title">Sign In to<br />Your Profile</h1>
-              <p className="auth-sub">// select or create account</p>
+              <p className="auth-sub">// continue with google</p>
 
-              <div className="user-list">
-                {/* Admin entry */}
-                <button className="user-btn admin-btn" onClick={() => setCurrentUser(ADMIN_USER)}>
-                  <div className="user-avatar admin-av">AD</div>
-                  <div><div className="user-name">@admin</div></div>
-                  <div className="admin-badge">ADMIN</div>
+              {firebaseUser === undefined ? (
+                <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "0.72rem", color: "#444", marginBottom: "1.5rem" }}>loading…</p>
+              ) : (
+                <button className="btn-google" onClick={signInWithGoogle}>
+                  <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z"/></svg>
+                  Continue with Google
                 </button>
+              )}
 
-                {users.map(u => (
-                  <button key={u.id} className="user-btn" onClick={() => setCurrentUser(u)}>
-                    <div className="user-avatar">{u.username.slice(0, 2).toUpperCase()}</div>
-                    <div><div className="user-name">@{u.username}</div></div>
-                    <div className="user-credits-badge">{u.credits} CR</div>
-                  </button>
-                ))}
-              </div>
-
-              <hr className="auth-divider" />
-              <div className="new-user-form">
-                <input
-                  className="input"
-                  placeholder="new username"
-                  value={newUsername}
-                  onChange={e => setNewUsername(e.target.value)}
-                  onKeyDown={e => e.key === "Enter" && createUser()}
-                />
-                <button className="btn-sm" onClick={createUser}>CREATE</button>
-              </div>
+              {DEBUG && (
+                <>
+                  <hr className="auth-divider" />
+                  <p className="auth-sub" style={{ marginBottom: "1rem" }}>// debug accounts</p>
+                  <div className="user-list">
+                    <button className="user-btn admin-btn" onClick={() => setCurrentUser(ADMIN_USER)}>
+                      <div className="user-avatar admin-av">AD</div>
+                      <div><div className="user-name">@admin</div></div>
+                      <div className="admin-badge">ADMIN</div>
+                    </button>
+                    {users.map(u => (
+                      <button key={u.id} className="user-btn" onClick={() => setCurrentUser(u)}>
+                        <div className="user-avatar">{u.username.slice(0, 2).toUpperCase()}</div>
+                        <div><div className="user-name">@{u.username}</div></div>
+                        <div className="user-credits-badge">{u.credits} CR</div>
+                      </button>
+                    ))}
+                  </div>
+                  <hr className="auth-divider" />
+                  <div className="new-user-form">
+                    <input
+                      className="input"
+                      placeholder="new username"
+                      value={newUsername}
+                      onChange={e => setNewUsername(e.target.value)}
+                      onKeyDown={e => e.key === "Enter" && createUser()}
+                    />
+                    <button className="btn-sm" onClick={createUser}>CREATE</button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
@@ -915,8 +981,11 @@ export default function AdSimulator() {
                   <span className={`credits-value ${creditBump ? "bump" : ""}`}>{currentUser.credits}</span>
                 </div>
                 <div className="profile-chip">
-                  <div className="profile-avatar">{currentUser.username.slice(0, 2).toUpperCase()}</div>
-                  <span className="profile-name">@{currentUser.username}</span>
+                  {currentUser.photoURL
+                    ? <img src={currentUser.photoURL} alt="" style={{ width: 30, height: 30, borderRadius: "50%", objectFit: "cover" }} referrerPolicy="no-referrer" />
+                    : <div className="profile-avatar">{currentUser.username.slice(0, 2).toUpperCase()}</div>
+                  }
+                  <span className="profile-name">{currentUser.isGoogle ? currentUser.username : `@${currentUser.username}`}</span>
                 </div>
                 <button className="logout-btn" onClick={signOut}>SIGN OUT</button>
               </div>
