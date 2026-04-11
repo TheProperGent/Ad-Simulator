@@ -21,7 +21,17 @@ const PRESET_LOGOS = ["⚡","🌿","🎮","💰","🚀","💎","🔥","🎯","�
 const CATEGORIES = ["Technology","Lifestyle","Gaming","Finance","Fashion","Food","Travel","Health","Entertainment","Sports"];
 const WORKER_URL = "https://vid-manager-guy.superyoda1999.workers.dev";
 
-const BLANK_AD = { brand: "", tagline: "", cta: "", category: "Technology", color: "#e63c3c", logo: "⚡", videoUrl: "" };
+const RARITIES = [
+  { key: "common",    label: "Common",    chance: 90,       color: "#888888", sparkle: false, animation: null,             speed: 0   },
+  { key: "uncommon",  label: "Uncommon",  chance: 7,        color: "#4ade80", sparkle: false, animation: "glow-uncommon",  speed: 3   },
+  { key: "rare",      label: "Rare",      chance: 2.5,      color: "#60a5fa", sparkle: false, animation: "glow-rare",      speed: 2.5 },
+  { key: "epic",      label: "Epic",      chance: 0.49,     color: "#a855f7", sparkle: true,  animation: "glow-epic",      speed: 2   },
+  { key: "legendary", label: "Legendary", chance: 0.0095,   color: "#fbbc04", sparkle: true,  animation: "glow-legendary", speed: 1.5 },
+  { key: "mythic",    label: "Mythic",    chance: 0.0001,   color: "#e63c3c", sparkle: true,  animation: "glow-mythic",    speed: 1   },
+];
+const RARITY_MAP = Object.fromEntries(RARITIES.map(r => [r.key, r]));
+
+const BLANK_AD = { brand: "", tagline: "", cta: "", category: "Technology", color: "#e63c3c", logo: "⚡", videoUrl: "", rarity: "common" };
 
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
@@ -233,9 +243,46 @@ const styles = `
   .main { flex: 1; min-width: 0; min-height: 100vh; display: flex; flex-direction: column; }
   @media (max-width: 900px) { .ad-sidebar { display: none; } }
 
+  /* ── RARITY ── */
+  @keyframes glow-uncommon  { 0%,100% { box-shadow: 0 0 4px #4ade8033, 0 0 8px #4ade8022;  border-color: #4ade8044; } 50% { box-shadow: 0 0 8px #4ade8055,  0 0 16px #4ade8033;  border-color: #4ade8077; } }
+  @keyframes glow-rare      { 0%,100% { box-shadow: 0 0 4px #60a5fa33, 0 0 8px #60a5fa22;  border-color: #60a5fa44; } 50% { box-shadow: 0 0 8px #60a5fa55,  0 0 16px #60a5fa33;  border-color: #60a5fa77; } }
+  @keyframes glow-epic      { 0%,100% { box-shadow: 0 0 8px #a855f766, 0 0 16px #a855f744, 0 0 32px #a855f722;  border-color: #a855f799; } 50% { box-shadow: 0 0 14px #a855f799, 0 0 28px #a855f755, 0 0 50px #a855f733;  border-color: #a855f7cc; } }
+  @keyframes glow-legendary { 0%,100% { box-shadow: 0 0 12px #fbbc0477, 0 0 24px #fbbc0444, 0 0 48px #fbbc0422;  border-color: #fbbc0499; } 50% { box-shadow: 0 0 20px #fbbc04aa, 0 0 40px #fbbc0466, 0 0 70px #fbbc0433;  border-color: #fbbc04cc; } }
+  @keyframes glow-mythic    { 0%,100% { box-shadow: 0 0 16px #e63c3c88, 0 0 32px #e63c3c55, 0 0 64px #e63c3c33, 0 0 96px #e63c3c11; border-color: #e63c3caa; } 50% { box-shadow: 0 0 28px #e63c3ccc, 0 0 56px #e63c3c88, 0 0 100px #e63c3c44, 0 0 140px #e63c3c22; border-color: #e63c3cee; } }
+  @keyframes sparkle-float  { 0%,100% { opacity: 0; transform: scale(0) rotate(0deg); } 30% { opacity: 1; transform: scale(1) rotate(135deg); } 70% { opacity: 0.7; transform: scale(0.7) rotate(270deg); } }
+  .rarity-badge { font-family: 'JetBrains Mono', monospace; font-size: 0.58rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; padding: 0.15rem 0.5rem; border-radius: 2px; display: inline-block; }
+  .rarity-selector { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-top: 0.25rem; }
+  .rarity-btn { font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; letter-spacing: 0.08em; padding: 0.35rem 0.75rem; border-radius: 2px; cursor: pointer; border: 1px solid #242424; background: #181818; color: #555; transition: all 0.15s; }
+  .rarity-btn.sel { color: #f0ede8; }
+  .sparkle-wrap { position: absolute; inset: 0; pointer-events: none; overflow: visible; z-index: 10; }
+
   /* ── LOADING ── */
   .loading-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: #333; letter-spacing: 0.2em; position: relative; z-index: 1; }
 `;
+
+function RaritySparkles({ color }) {
+  const pts = [
+    { top: "-10px", left: "12%",  delay: "0s",    size: "0.55rem" },
+    { top: "-10px", right: "18%", delay: "0.5s",  size: "0.45rem" },
+    { bottom: "-10px", left: "22%",  delay: "0.9s", size: "0.5rem"  },
+    { bottom: "-10px", right: "12%", delay: "0.3s", size: "0.45rem" },
+    { top: "35%", left: "-12px",  delay: "0.7s",  size: "0.4rem"  },
+    { top: "60%", right: "-12px", delay: "1.1s",  size: "0.5rem"  },
+  ];
+  return (
+    <div className="sparkle-wrap">
+      {pts.map((p, i) => (
+        <div key={i} style={{ position: "absolute", ...p, color, fontSize: p.size, animation: `sparkle-float 2s ease-in-out infinite`, animationDelay: p.delay }}>✦</div>
+      ))}
+    </div>
+  );
+}
+
+function getRarityStyle(rarity) {
+  const r = RARITY_MAP[rarity] || RARITY_MAP.common;
+  if (!r.animation) return {};
+  return { animation: `${r.animation} ${r.speed}s ease-in-out infinite` };
+}
 
 const ADSENSE_CLIENT = "ca-pub-3769557613296773";
 const ADSENSE_SLOT   = "8872751959";
@@ -363,9 +410,21 @@ export default function AdSimulator() {
 
   const runAd = () => {
     let ad, adminFlag = false;
-    if (adminAds.length > 0 && Math.random() < ADMIN_RATE) {
-      ad = adminAds[Math.floor(Math.random() * adminAds.length)];
-      adminFlag = true;
+    if (adminAds.length > 0) {
+      const roll = Math.random() * 100;
+      let cumulative = 0;
+      let rolledRarity = "common";
+      for (const r of RARITIES) {
+        cumulative += r.chance;
+        if (roll < cumulative) { rolledRarity = r.key; break; }
+      }
+      const pool = adminAds.filter(a => (a.rarity || "common") === rolledRarity);
+      if (pool.length > 0) {
+        ad = pool[Math.floor(Math.random() * pool.length)];
+        adminFlag = true;
+      } else {
+        ad = MOCK_ADS[Math.floor(Math.random() * MOCK_ADS.length)];
+      }
     } else {
       ad = MOCK_ADS[Math.floor(Math.random() * MOCK_ADS.length)];
     }
@@ -645,23 +704,32 @@ export default function AdSimulator() {
                       <span className="section-sub">served at {Math.round(ADMIN_RATE * 100)}% rate</span>
                     </div>
                     <div className="admin-ads-grid">
-                      {adminAds.map(ad => (
-                        <div key={ad.id} className="admin-ad-card">
-                          <div className="adm-banner" style={{ background: ad.color + "18" }}>
-                            <BannerBg color={ad.color} opacity={0.22} />
-                            <div className="adm-icon">{ad.logo}</div>
-                            <div className="adm-brand">{ad.brand}</div>
-                            <div className="adm-tagline">{ad.tagline}</div>
-                          </div>
-                          <div className="adm-footer">
-                            <span className="adm-cat">{ad.category}</span>
-                            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                              {ad.videoUrl && <span className="video-badge">▶ VIDEO</span>}
-                              <button className="delete-btn" onClick={() => deleteAdminAd(ad.id)}>DELETE</button>
+                      {adminAds.map(ad => {
+                        const rar = RARITY_MAP[ad.rarity || "common"];
+                        return (
+                        <div key={ad.id} className="admin-ad-card" style={{ position: "relative", overflow: "visible", ...getRarityStyle(ad.rarity || "common") }}>
+                          {rar.sparkle && <RaritySparkles color={rar.color} />}
+                          <div style={{ borderRadius: "2px", overflow: "hidden", position: "relative", zIndex: 1 }}>
+                            <div className="adm-banner" style={{ background: ad.color + "18" }}>
+                              <BannerBg color={ad.color} opacity={0.22} />
+                              <div className="adm-icon">{ad.logo}</div>
+                              <div className="adm-brand">{ad.brand}</div>
+                              <div className="adm-tagline">{ad.tagline}</div>
+                            </div>
+                            <div className="adm-footer">
+                              <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                                <span className="rarity-badge" style={{ color: rar.color, background: rar.color + "18", border: `1px solid ${rar.color}33` }}>{rar.label}</span>
+                                <span className="adm-cat">{ad.category}</span>
+                              </div>
+                              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                                {ad.videoUrl && <span className="video-badge">▶ VIDEO</span>}
+                                <button className="delete-btn" onClick={() => deleteAdminAd(ad.id)}>DELETE</button>
+                              </div>
                             </div>
                           </div>
                         </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </>
                 )
@@ -749,6 +817,25 @@ export default function AdSimulator() {
                       <select className="form-select" value={newAd.category} onChange={e => setNewAd(p => ({ ...p, category: e.target.value }))}>
                         {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                       </select>
+                    </div>
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Rarity</label>
+                    <div className="rarity-selector">
+                      {RARITIES.map(r => (
+                        <button
+                          key={r.key}
+                          className={`rarity-btn ${newAd.rarity === r.key ? "sel" : ""}`}
+                          style={newAd.rarity === r.key ? { borderColor: r.color, color: r.color, background: r.color + "18" } : {}}
+                          onClick={() => setNewAd(p => ({ ...p, rarity: r.key }))}
+                        >
+                          {r.label}
+                          <span style={{ marginLeft: "0.35rem", fontFamily: "monospace", fontSize: "0.55rem", color: newAd.rarity === r.key ? r.color + "aa" : "#333" }}>
+                            {r.chance}%
+                          </span>
+                        </button>
+                      ))}
                     </div>
                   </div>
 
@@ -899,19 +986,28 @@ export default function AdSimulator() {
                   </div>
                 ) : (
                   <div className="collection-grid">
-                    {userLibrary.map(ad => (
-                      <div key={ad.id} className="coll-card">
-                        <div className="coll-banner" style={{ background: ad.color + "18" }}>
-                          <div className="coll-banner-bg" style={{ background: `radial-gradient(circle at 50% 50%, ${ad.color}, transparent 70%)`, opacity: 0.22, position: "absolute", inset: 0 }} />
-                          <div className="coll-icon">{ad.logo}</div>
-                          <div className="coll-brand">{ad.brand}</div>
-                        </div>
-                        <div className="coll-body">
-                          <div className="coll-tagline">{ad.tagline}</div>
-                          <div className="coll-cat">{ad.category}</div>
+                    {userLibrary.map(ad => {
+                      const rar = RARITY_MAP[ad.rarity || "common"];
+                      return (
+                      <div key={ad.id} className="coll-card" style={{ position: "relative", overflow: "visible", ...getRarityStyle(ad.rarity || "common") }}>
+                        {rar.sparkle && <RaritySparkles color={rar.color} />}
+                        <div style={{ borderRadius: "2px", overflow: "hidden", position: "relative", zIndex: 1 }}>
+                          <div className="coll-banner" style={{ background: ad.color + "18" }}>
+                            <div className="coll-banner-bg" style={{ background: `radial-gradient(circle at 50% 50%, ${ad.color}, transparent 70%)`, opacity: 0.22, position: "absolute", inset: 0 }} />
+                            <div className="coll-icon">{ad.logo}</div>
+                            <div className="coll-brand">{ad.brand}</div>
+                          </div>
+                          <div className="coll-body">
+                            <div className="coll-tagline">{ad.tagline}</div>
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                              <span className="coll-cat">{ad.category}</span>
+                              <span className="rarity-badge" style={{ color: rar.color, background: rar.color + "18", border: `1px solid ${rar.color}33` }}>{rar.label}</span>
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -923,9 +1019,13 @@ export default function AdSimulator() {
         {/* ── AD MODAL (running) ── */}
         {adState === "running" && currentAd && (
           <div className="modal-backdrop">
-            <div className={`ad-card ${isAdminAd ? "is-admin" : ""}`}>
-              <div className={`ad-tag ${isAdminAd ? "admin" : ""}`}>
-                {isAdminAd ? "ADMIN AD" : "ADVERTISEMENT"}
+            {(() => {
+              const rar = isAdminAd ? (RARITY_MAP[currentAd.rarity || "common"]) : null;
+              return (
+            <div className={`ad-card ${isAdminAd ? "is-admin" : ""}`} style={rar ? getRarityStyle(rar.key) : {}}>
+              {rar?.sparkle && <RaritySparkles color={rar.color} />}
+              <div className={`ad-tag ${isAdminAd ? "admin" : ""}`} style={rar && rar.key !== "common" ? { color: rar.color, borderColor: rar.color + "44" } : {}}>
+                {isAdminAd ? rar.label.toUpperCase() + " AD" : "ADVERTISEMENT"}
               </div>
               {currentAd.videoUrl ? (
                 <video
@@ -967,6 +1067,8 @@ export default function AdSimulator() {
                 </div>
               </div>
             </div>
+              );
+            })()}
           </div>
         )}
 
@@ -976,6 +1078,7 @@ export default function AdSimulator() {
             <div className="complete-modal">
               <div className="complete-icon">✦</div>
               <h2 className="complete-title">Credit Earned</h2>
+              {isAdminAd && (() => { const rar = RARITY_MAP[currentAd?.rarity || "common"]; return <span className="rarity-badge" style={{ color: rar.color, background: rar.color + "18", border: `1px solid ${rar.color}33`, marginBottom: "0.75rem" }}>{rar.label}</span>; })()}
               <p className="complete-sub">
                 Ad impression from {currentAd?.brand}<br />
                 was served successfully.
