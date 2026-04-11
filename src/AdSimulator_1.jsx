@@ -23,12 +23,6 @@ const ADMIN_RATE = 0.30;
 
 const BLANK_STATS = () => ({ lifetimeCredits: 0, rarityCount: { common: 0, uncommon: 0, rare: 0, epic: 0, legendary: 0, mythic: 0 }, adCount: {} });
 
-const MOCK_ADS = [
-  { brand: "NovaTech", tagline: "The Future of Cloud Infrastructure", cta: "Start Free Trial", color: "#1a73e8", logo: "⚡", category: "Technology" },
-  { brand: "GreenLeaf Co.", tagline: "Sustainable Products for Modern Living", cta: "Shop Now", color: "#34a853", logo: "🌿", category: "Lifestyle" },
-  { brand: "ArcadeMind", tagline: "Play. Earn. Dominate.", cta: "Download Free", color: "#ea4335", logo: "🎮", category: "Gaming" },
-  { brand: "PulseFinance", tagline: "Your Money, Smarter Every Day", cta: "Open Account", color: "#fbbc04", logo: "💰", category: "Finance" },
-];
 
 const DEFAULT_USERS = [
   { id: "1", username: "alex_dev", credits: 12 },
@@ -626,27 +620,19 @@ export default function AdSimulator() {
   }, [adState]);
 
   const runAd = () => {
-    let ad, adminFlag = false;
-    if (adminAds.length > 0) {
-      const roll = Math.random() * 100;
-      let cumulative = 0;
-      let rolledRarity = "common";
-      for (const r of RARITIES) {
-        cumulative += r.chance;
-        if (roll < cumulative) { rolledRarity = r.key; break; }
-      }
-      const pool = adminAds.filter(a => (a.rarity || "common") === rolledRarity);
-      if (pool.length > 0) {
-        ad = pool[Math.floor(Math.random() * pool.length)];
-        adminFlag = true;
-      } else {
-        // No ads at the rolled rarity — pick any admin ad rather than falling back to mocks
-        ad = adminAds[Math.floor(Math.random() * adminAds.length)];
-        adminFlag = true;
-      }
-    } else {
-      ad = MOCK_ADS[Math.floor(Math.random() * MOCK_ADS.length)];
+    if (adminAds.length === 0) return;
+    let adminFlag = true;
+    const roll = Math.random() * 100;
+    let cumulative = 0;
+    let rolledRarity = "common";
+    for (const r of RARITIES) {
+      cumulative += r.chance;
+      if (roll < cumulative) { rolledRarity = r.key; break; }
     }
+    const pool = adminAds.filter(a => (a.rarity || "common") === rolledRarity);
+    const ad = pool.length > 0
+      ? pool[Math.floor(Math.random() * pool.length)]
+      : adminAds[Math.floor(Math.random() * adminAds.length)];
     adDurationRef.current = 5000;
     adStartRef.current = ad.videoUrl ? null : Date.now();
     currentAdRef.current = ad;
@@ -1269,9 +1255,9 @@ export default function AdSimulator() {
                   <div className="run-btn-wrapper">
                     <div className="run-btn-ring" />
                     <div className="run-btn-ring run-btn-ring-2" />
-                    <button className="run-btn" onClick={runAd} disabled={adState !== "idle"}>
+                    <button className="run-btn" onClick={runAd} disabled={adState !== "idle" || adminAds.length === 0}>
                       <span className="run-btn-text">RUN AD</span>
-                      <span className="run-btn-sub">earn 1 credit</span>
+                      <span className="run-btn-sub">{adminAds.length === 0 ? "no ads available" : "earn 1 credit"}</span>
                     </button>
                   </div>
 
