@@ -246,6 +246,8 @@ const styles = `
   .ad-progress-countdown { font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; color: #55556a; }
   .ad-progress-track { height: 4px; background: #1e1e2c; border-radius: 999px; overflow: hidden; }
   .ad-progress-fill { height: 100%; border-radius: 999px; transition: width 0.1s linear; }
+  .preview-close-btn { width: 100%; margin-top: 1.25rem; background: #1e1e2c; border: 1px solid #2a2a38; border-radius: 10px; color: #8888aa; font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 0.85rem; padding: 0.7rem; cursor: pointer; transition: all 0.15s; }
+  .preview-close-btn:hover { background: #2a2a3c; color: #eeeaf6; }
 
   /* ── COMPLETE ── */
   .complete-modal { background: #16161e; border: 1px solid #2a2a38; border-radius: 20px; padding: 2.5rem; text-align: center; max-width: 340px; width: 100%; animation: scaleIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1); box-shadow: 0 24px 64px rgba(0,0,0,0.5); }
@@ -352,9 +354,11 @@ export default function AdSimulator() {
   const [storageReady, setStorageReady] = useState(false);
   const [videoUploadState, setVideoUploadState] = useState("idle"); // "idle" | "uploading" | "error"
   const [adVideoSize, setAdVideoSize] = useState(null); // { w, h } natural video dimensions
+  const [isPreview, setIsPreview] = useState(false);
 
   const currentAdRef = useRef(null);
   const isAdminAdRef = useRef(false);
+  const previewModeRef = useRef(false);
   const currentUserRef = useRef(null);
   const userLibraryRef = useRef([]);
   const intervalRef = useRef(null);
@@ -448,8 +452,13 @@ export default function AdSimulator() {
         setCountdown(Math.max(0, Math.ceil((duration - elapsed) / 1000)));
         if (elapsed >= duration) {
           clearInterval(intervalRef.current);
-          setAdState("complete");
-          awardCredit();
+          if (previewModeRef.current) {
+            setAdState("idle");
+            previewModeRef.current = false;
+          } else {
+            setAdState("complete");
+            awardCredit();
+          }
         }
       }, 50);
     }
@@ -486,6 +495,7 @@ export default function AdSimulator() {
     setProgress(0);
     setCountdown(ad.videoUrl ? null : 5);
     setAdVideoSize(null);
+    setIsPreview(false);
     setAdState("running");
   };
 
@@ -552,6 +562,29 @@ export default function AdSimulator() {
     } catch (err) {
       if (err.code !== "auth/popup-closed-by-user") console.error(err);
     }
+  };
+
+  const previewAd = (ad, adminFlag = false) => {
+    previewModeRef.current = true;
+    adDurationRef.current = ad.videoUrl ? 999999 : 5000;
+    adStartRef.current = ad.videoUrl ? null : Date.now();
+    currentAdRef.current = ad;
+    isAdminAdRef.current = adminFlag;
+    setCurrentAd(ad);
+    setIsAdminAd(adminFlag);
+    setIsPreview(true);
+    setIsNewCollect(false);
+    setProgress(0);
+    setCountdown(ad.videoUrl ? null : null);
+    setAdVideoSize(null);
+    setAdState("running");
+  };
+
+  const closePreview = () => {
+    previewModeRef.current = false;
+    setIsPreview(false);
+    setAdState("idle");
+    clearInterval(intervalRef.current);
   };
 
   const createAdminAd = () => {
@@ -788,7 +821,7 @@ export default function AdSimulator() {
                       {adminAds.map(ad => {
                         const rar = RARITY_MAP[ad.rarity || "common"];
                         return (
-                        <div key={ad.id} className="admin-ad-card" style={{ position: "relative", overflow: "visible", ...getRarityStyle(ad.rarity || "common") }}>
+                        <div key={ad.id} className="admin-ad-card" style={{ position: "relative", overflow: "visible", cursor: "pointer", ...getRarityStyle(ad.rarity || "common") }} onClick={() => previewAd(ad, true)}>
                           {rar.sparkle && <RaritySparkles color={rar.color} />}
                           <div style={{ borderRadius: "2px", overflow: "hidden", position: "relative", zIndex: 1 }}>
                             <div className="adm-banner" style={{ background: ad.color + "18" }}>
@@ -804,7 +837,7 @@ export default function AdSimulator() {
                               </div>
                               <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                                 {ad.videoUrl && <span className="video-badge">▶ VIDEO</span>}
-                                <button className="delete-btn" onClick={() => deleteAdminAd(ad.id)}>DELETE</button>
+                                <button className="delete-btn" onClick={e => { e.stopPropagation(); deleteAdminAd(ad.id); }}>DELETE</button>
                               </div>
                             </div>
                           </div>
@@ -1078,7 +1111,7 @@ export default function AdSimulator() {
                     {userLibrary.map(ad => {
                       const rar = RARITY_MAP[ad.rarity || "common"];
                       return (
-                      <div key={ad.id} className="coll-card" style={{ position: "relative", overflow: "visible", ...getRarityStyle(ad.rarity || "common") }}>
+                      <div key={ad.id} className="coll-card" style={{ position: "relative", overflow: "visible", cursor: "pointer", ...getRarityStyle(ad.rarity || "common") }} onClick={() => previewAd(ad, true)}>
                         {rar.sparkle && <RaritySparkles color={rar.color} />}
                         <div style={{ borderRadius: "2px", overflow: "hidden", position: "relative", zIndex: 1 }}>
                           <div className="coll-banner" style={{ background: ad.color + "18" }}>
@@ -1146,15 +1179,19 @@ export default function AdSimulator() {
                     <span className="new-collect-badge">✦ NEW</span>
                   )}
                 </div>
-                <div className="ad-progress-wrapper">
-                  <div className="ad-progress-label">
-                    <span className="ad-progress-text">AD PLAYING</span>
-                    <span className="ad-progress-countdown">{countdown !== null ? `${countdown}s remaining` : "loading…"}</span>
+                {isPreview ? (
+                  <button className="preview-close-btn" onClick={closePreview}>✕ Close Preview</button>
+                ) : (
+                  <div className="ad-progress-wrapper">
+                    <div className="ad-progress-label">
+                      <span className="ad-progress-text">AD PLAYING</span>
+                      <span className="ad-progress-countdown">{countdown !== null ? `${countdown}s remaining` : "loading…"}</span>
+                    </div>
+                    <div className="ad-progress-track">
+                      <div className="ad-progress-fill" style={{ width: `${progress}%`, background: currentAd.color }} />
+                    </div>
                   </div>
-                  <div className="ad-progress-track">
-                    <div className="ad-progress-fill" style={{ width: `${progress}%`, background: currentAd.color }} />
-                  </div>
-                </div>
+                )}
               </div>
             </div>
               );
