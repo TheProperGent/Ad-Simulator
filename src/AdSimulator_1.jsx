@@ -269,10 +269,21 @@ const styles = `
   /* ── RARITY ── */
   @keyframes glow-uncommon  { 0%,100% { box-shadow: 0 0 4px #4ade8033, 0 0 8px #4ade8022;  border-color: #4ade8044; } 50% { box-shadow: 0 0 8px #4ade8055,  0 0 16px #4ade8033;  border-color: #4ade8077; } }
   @keyframes glow-rare      { 0%,100% { box-shadow: 0 0 4px #60a5fa33, 0 0 8px #60a5fa22;  border-color: #60a5fa44; } 50% { box-shadow: 0 0 8px #60a5fa55,  0 0 16px #60a5fa33;  border-color: #60a5fa77; } }
-  @keyframes glow-epic      { 0%,100% { box-shadow: 0 0 8px #a855f766, 0 0 16px #a855f744, 0 0 32px #a855f722;  border-color: #a855f799; } 50% { box-shadow: 0 0 14px #a855f799, 0 0 28px #a855f755, 0 0 50px #a855f733;  border-color: #a855f7cc; } }
-  @keyframes glow-legendary { 0%,100% { box-shadow: 0 0 12px #fbbc0477, 0 0 24px #fbbc0444, 0 0 48px #fbbc0422;  border-color: #fbbc0499; } 50% { box-shadow: 0 0 20px #fbbc04aa, 0 0 40px #fbbc0466, 0 0 70px #fbbc0433;  border-color: #fbbc04cc; } }
-  @keyframes glow-mythic    { 0%,100% { box-shadow: 0 0 16px #e63c3c88, 0 0 32px #e63c3c55, 0 0 64px #e63c3c33, 0 0 96px #e63c3c11; border-color: #e63c3caa; } 50% { box-shadow: 0 0 28px #e63c3ccc, 0 0 56px #e63c3c88, 0 0 100px #e63c3c44, 0 0 140px #e63c3c22; border-color: #e63c3cee; } }
+  @keyframes glow-epic      { 0%,100% { box-shadow: 0 0 6px #a855f744, 0 0 12px #a855f722;  border-color: #a855f766; } 50% { box-shadow: 0 0 10px #a855f766, 0 0 20px #a855f733;  border-color: #a855f799; } }
+  @keyframes glow-legendary { 0%,100% { box-shadow: 0 0 8px #fbbc0455, 0 0 16px #fbbc0422;  border-color: #fbbc0477; } 50% { box-shadow: 0 0 14px #fbbc0477, 0 0 28px #fbbc0433;  border-color: #fbbc04aa; } }
+  @keyframes glow-mythic    { 0%,100% { box-shadow: 0 0 10px #e63c3c55, 0 0 20px #e63c3c33, 0 0 40px #e63c3c11; border-color: #e63c3c88; } 50% { box-shadow: 0 0 16px #e63c3c77, 0 0 32px #e63c3c44, 0 0 60px #e63c3c22; border-color: #e63c3cbb; } }
   @keyframes sparkle-float  { 0%,100% { opacity: 0; transform: scale(0) rotate(0deg); } 30% { opacity: 1; transform: scale(1) rotate(135deg); } 70% { opacity: 0.7; transform: scale(0.7) rotate(270deg); } }
+  @keyframes sparkle-float-large { 0%,100% { opacity: 0; transform: scale(0) rotate(0deg); } 25% { opacity: 1; transform: scale(1.3) rotate(120deg); } 65% { opacity: 0.9; transform: scale(1) rotate(260deg); } }
+  @keyframes new-collect-in { 0% { opacity: 0; transform: scale(0.7) translateY(30px); } 60% { opacity: 1; transform: scale(1.05) translateY(-6px); } 100% { opacity: 1; transform: scale(1) translateY(0); } }
+  @keyframes new-collect-shimmer { 0%,100% { background-position: 200% center; } 50% { background-position: 0% center; } }
+  .new-collect-overlay { position: fixed; inset: 0; z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1.5rem; background: rgba(0,0,0,0.75); backdrop-filter: blur(12px); animation: fadeIn 0.25s ease; }
+  .new-collect-card { position: relative; background: #16161e; border-radius: 24px; padding: 2.5rem 2rem 2rem; text-align: center; max-width: 360px; width: 100%; box-shadow: 0 32px 80px rgba(0,0,0,0.6); animation: new-collect-in 0.5s cubic-bezier(0.34,1.56,0.64,1); overflow: visible; }
+  .new-collect-burst { font-size: 4rem; margin-bottom: 0.5rem; animation: new-collect-in 0.5s cubic-bezier(0.34,1.56,0.64,1); display: block; }
+  .new-collect-eyebrow { font-family: 'Nunito', sans-serif; font-size: 0.78rem; font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase; color: #8888aa; margin-bottom: 0.75rem; }
+  .new-collect-rarity { font-family: 'Nunito', sans-serif; font-size: 2rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 0.25rem; background: linear-gradient(135deg, var(--rar-color), #fff 60%, var(--rar-color)); background-size: 200% auto; -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: new-collect-shimmer 2s linear infinite; }
+  .new-collect-brand { font-family: 'Nunito', sans-serif; font-size: 1rem; font-weight: 700; color: #8888aa; margin-bottom: 2rem; }
+  .new-collect-dismiss { width: 100%; background: linear-gradient(135deg, var(--rar-color-dim), var(--rar-color)); color: #fff; border: none; border-radius: 12px; padding: 0.9rem; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.95rem; cursor: pointer; transition: opacity 0.15s, transform 0.1s; }
+  .new-collect-dismiss:hover { opacity: 0.9; transform: translateY(-1px); }
   .rarity-badge { font-family: 'Nunito', sans-serif; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.2rem 0.6rem; border-radius: 999px; display: inline-block; }
   .rarity-selector { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-top: 0.25rem; }
   .rarity-btn { font-family: 'Nunito', sans-serif; font-size: 0.72rem; font-weight: 700; padding: 0.3rem 0.8rem; border-radius: 999px; cursor: pointer; border: 1px solid #2a2a38; background: #1a1a22; color: #55556a; transition: all 0.15s; }
@@ -283,19 +294,33 @@ const styles = `
   .loading-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; font-family: 'Nunito', sans-serif; font-size: 0.85rem; font-weight: 700; color: #383848; letter-spacing: 0.1em; position: relative; z-index: 1; }
 `;
 
-function RaritySparkles({ color }) {
-  const pts = [
-    { top: "-10px", left: "12%",  delay: "0s",    size: "0.55rem" },
-    { top: "-10px", right: "18%", delay: "0.5s",  size: "0.45rem" },
-    { bottom: "-10px", left: "22%",  delay: "0.9s", size: "0.5rem"  },
-    { bottom: "-10px", right: "12%", delay: "0.3s", size: "0.45rem" },
-    { top: "35%", left: "-12px",  delay: "0.7s",  size: "0.4rem"  },
-    { top: "60%", right: "-12px", delay: "1.1s",  size: "0.5rem"  },
+function RaritySparkles({ color, large = false }) {
+  const small = [
+    { top: "-10px",    left: "12%",   delay: "0s",    size: "0.55rem" },
+    { top: "-10px",    right: "18%",  delay: "0.5s",  size: "0.45rem" },
+    { bottom: "-10px", left: "22%",   delay: "0.9s",  size: "0.5rem"  },
+    { bottom: "-10px", right: "12%",  delay: "0.3s",  size: "0.45rem" },
+    { top: "35%",      left: "-12px", delay: "0.7s",  size: "0.4rem"  },
+    { top: "60%",      right: "-12px",delay: "1.1s",  size: "0.5rem"  },
   ];
+  const big = [
+    { top: "-18px",    left: "8%",    delay: "0s",    size: "1.1rem"  },
+    { top: "-14px",    left: "35%",   delay: "0.35s", size: "0.85rem" },
+    { top: "-18px",    right: "10%",  delay: "0.7s",  size: "1rem"    },
+    { bottom: "-18px", left: "15%",   delay: "0.55s", size: "0.9rem"  },
+    { bottom: "-14px", left: "50%",   delay: "0.15s", size: "0.8rem"  },
+    { bottom: "-18px", right: "8%",   delay: "0.9s",  size: "1rem"    },
+    { top: "20%",      left: "-18px", delay: "0.45s", size: "0.85rem" },
+    { top: "55%",      left: "-16px", delay: "1.1s",  size: "0.75rem" },
+    { top: "20%",      right: "-18px",delay: "0.25s", size: "0.9rem"  },
+    { top: "60%",      right: "-16px",delay: "0.8s",  size: "0.8rem"  },
+  ];
+  const pts = large ? big : small;
+  const anim = large ? "sparkle-float-large 1.4s ease-in-out infinite" : "sparkle-float 2s ease-in-out infinite";
   return (
     <div className="sparkle-wrap">
       {pts.map((p, i) => (
-        <div key={i} style={{ position: "absolute", ...p, color, fontSize: p.size, animation: `sparkle-float 2s ease-in-out infinite`, animationDelay: p.delay }}>✦</div>
+        <div key={i} style={{ position: "absolute", ...p, color, fontSize: p.size, animation: anim, animationDelay: p.delay }}>✦</div>
       ))}
     </div>
   );
@@ -340,7 +365,7 @@ export default function AdSimulator() {
   const [adState, setAdState] = useState("idle");
   const [currentAd, setCurrentAd] = useState(null);
   const [isAdminAd, setIsAdminAd] = useState(false);
-  const [isNewCollect, setIsNewCollect] = useState(false);
+  const [showNewCollectOverlay, setShowNewCollectOverlay] = useState(false);
   const [progress, setProgress] = useState(0);
   const [countdown, setCountdown] = useState(5);
   const [history, setHistory] = useState([]);
@@ -492,7 +517,7 @@ export default function AdSimulator() {
     isAdminAdRef.current = adminFlag;
     setCurrentAd(ad);
     setIsAdminAd(adminFlag);
-    setIsNewCollect(false);
+    setShowNewCollectOverlay(false);
     setProgress(0);
     setCountdown(ad.videoUrl ? null : 5);
     setAdVideoSize(null);
@@ -522,14 +547,14 @@ export default function AdSimulator() {
 
     if (isAdmin && ad && !lib.some(item => item.id === ad.id)) {
       setUserLibrary(prev => [...prev, ad]);
-      setIsNewCollect(true);
+      setShowNewCollectOverlay(true);
     }
   };
 
   const dismissComplete = () => {
     setAdState("idle");
     setCurrentAd(null);
-    setIsNewCollect(false);
+    setShowNewCollectOverlay(false);
   };
 
   const createUser = () => {
@@ -574,7 +599,7 @@ export default function AdSimulator() {
     setCurrentAd(ad);
     setIsAdminAd(adminFlag);
     setIsPreview(true);
-    setIsNewCollect(false);
+    setShowNewCollectOverlay(false);
     setProgress(0);
     setCountdown(ad.videoUrl ? null : null);
     setAdVideoSize(null);
@@ -1172,7 +1197,7 @@ export default function AdSimulator() {
               const rar = isAdminAd ? (RARITY_MAP[currentAd.rarity || "common"]) : null;
               return (
             <div className={`ad-card ${isAdminAd ? "is-admin" : ""}`} style={{ ...(rar ? getRarityStyle(rar.key) : {}), ...(adVideoSize ? { maxWidth: Math.round(Math.min(Math.max(window.innerHeight * 0.65 * (adVideoSize.w / adVideoSize.h), 300), window.innerWidth * 0.92, 640)) } : {}) }}>
-              {rar?.sparkle && <RaritySparkles color={rar.color} />}
+              {rar?.sparkle && <RaritySparkles color={rar.color} large />}
               <div className={`ad-tag ${isAdminAd ? "admin" : ""}`} style={rar && rar.key !== "common" ? { color: rar.color, borderColor: rar.color + "44" } : {}}>
                 {isAdminAd ? rar.label.toUpperCase() + " AD" : "ADVERTISEMENT"}
               </div>
@@ -1226,8 +1251,32 @@ export default function AdSimulator() {
           </div>
         )}
 
+        {/* ── NEW COLLECT OVERLAY ── */}
+        {showNewCollectOverlay && currentAd && (() => {
+          const rar = RARITY_MAP[currentAd.rarity || "common"];
+          const emojis = { common: "🎉", uncommon: "🌟", rare: "💎", epic: "✨", legendary: "🏆", mythic: "🔥" };
+          return (
+            <div className="new-collect-overlay">
+              <div className="new-collect-card" style={{ border: `2px solid ${rar.color}66`, boxShadow: `0 0 60px ${rar.color}33, 0 32px 80px rgba(0,0,0,0.6)`, "--rar-color": rar.color, "--rar-color-dim": rar.color + "99" }}>
+                <RaritySparkles color={rar.color} large />
+                <span className="new-collect-burst">{emojis[rar.key]}</span>
+                <div className="new-collect-eyebrow">New to your collection!</div>
+                <div className="new-collect-rarity" style={{ "--rar-color": rar.color }}>{rar.label}</div>
+                <div className="new-collect-brand">{currentAd.brand}</div>
+                <button
+                  className="new-collect-dismiss"
+                  style={{ "--rar-color": rar.color, "--rar-color-dim": rar.color + "99" }}
+                  onClick={() => setShowNewCollectOverlay(false)}
+                >
+                  Awesome! ✦
+                </button>
+              </div>
+            </div>
+          );
+        })()}
+
         {/* ── COMPLETE MODAL ── */}
-        {adState === "complete" && (
+        {adState === "complete" && !showNewCollectOverlay && (
           <div className="modal-backdrop">
             <div className="complete-modal">
               <div className="complete-icon">✦</div>
@@ -1237,11 +1286,6 @@ export default function AdSimulator() {
                 Ad impression from {currentAd?.brand}<br />
                 was served successfully.
               </p>
-              {isNewCollect && (
-                <div className="complete-collect-note">
-                  ✦ New ad added to your collection!
-                </div>
-              )}
               <div className="complete-credit">+1 CR</div>
               <button className="btn-primary" onClick={dismissComplete}>RUN ANOTHER AD</button>
             </div>
