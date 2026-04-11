@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut as firebaseSignOut } from "firebase/auth";
+import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -12,6 +13,7 @@ const firebaseConfig = {
 };
 const firebaseApp = initializeApp(firebaseConfig);
 const auth = getAuth(firebaseApp);
+const db = getFirestore(firebaseApp);
 const googleProvider = new GoogleAuthProvider();
 
 const DEBUG = true; // set to false to hide debug accounts in production
@@ -541,29 +543,26 @@ export default function AdSimulator() {
     return () => unsub();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Load shared data on mount ──
+  // ── Load debug users from localStorage ──
   useEffect(() => {
-    async function load() {
-      const r1 = localStorage.getItem("sim_adminAds");
-      if (r1) setAdminAds(JSON.parse(r1));
-      const r2 = localStorage.getItem("sim_users");
-      if (r2) setUsers(JSON.parse(r2));
-      setStorageReady(true);
-    }
-    load();
+    const r = localStorage.getItem("sim_users");
+    if (r) setUsers(JSON.parse(r));
+    setStorageReady(true);
   }, []);
 
-  // ── Persist admin ads ──
-  useEffect(() => {
-    if (!storageReady) return;
-    try { localStorage.setItem("sim_adminAds", JSON.stringify(adminAds)); } catch {}
-  }, [adminAds, storageReady]);
-
-  // ── Persist users ──
+  // ── Persist debug users ──
   useEffect(() => {
     if (!storageReady) return;
     try { localStorage.setItem("sim_users", JSON.stringify(users)); } catch {}
   }, [users, storageReady]);
+
+  // ── Real-time admin ads listener (Firestore) ──
+  useEffect(() => {
+    const unsub = onSnapshot(collection(db, "adminAds"), snap => {
+      setAdminAds(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    });
+    return () => unsub();
+  }, []);
 
   // ── Load user library + stats on login ──
   useEffect(() => {
@@ -580,23 +579,25 @@ export default function AdSimulator() {
     try { localStorage.setItem(`sim_lib_${currentUser.id}`, JSON.stringify(userLibrary)); } catch {}
   }, [userLibrary, currentUser, storageReady]);
 
-  // ── Persist user stats + publish to leaderboard store ──
+  // ── Persist user stats + publish to Firestore leaderboard ──
   useEffect(() => {
     if (!currentUser || currentUser.isAdmin || !storageReady) return;
-    try {
-      localStorage.setItem(`sim_stats_${currentUser.id}`, JSON.stringify(userStats));
-      // publish to shared leaderboard index
-      const idx = JSON.parse(localStorage.getItem("sim_leaderboard") || "{}");
-      idx[currentUser.id] = { name: currentUser.username, photoURL: currentUser.photoURL || null, ...userStats };
-      localStorage.setItem("sim_leaderboard", JSON.stringify(idx));
-      setAllUserStats(idx);
-    } catch {}
+    try { localStorage.setItem(`sim_stats_${currentUser.id}`, JSON.stringify(userStats)); } catch {}
+    setDoc(doc(db, "leaderboard", currentUser.id), {
+      name: currentUser.username,
+      photoURL: currentUser.photoURL || null,
+      ...userStats,
+    }).catch(() => {});
   }, [userStats, currentUser, storageReady]);
 
-  // ── Load leaderboard on mount ──
+  // ── Real-time leaderboard listener (Firestore) ──
   useEffect(() => {
-    const idx = JSON.parse(localStorage.getItem("sim_leaderboard") || "{}");
-    setAllUserStats(idx);
+    const unsub = onSnapshot(collection(db, "leaderboard"), snap => {
+      const idx = {};
+      snap.docs.forEach(d => { idx[d.id] = d.data(); });
+      setAllUserStats(idx);
+    });
+    return () => unsub();
   }, []);
 
   // ── Ad timer ──
@@ -762,38 +763,43 @@ export default function AdSimulator() {
     clearInterval(intervalRef.current);
   };
 
-  const createAdminAd = () => {
+  const createAdminAd = async () => {
     const { brand, tagline, cta } = newAd;
     if (!brand.trim() || !tagline.trim() || !cta.trim()) {
       setFormError("// brand, tagline, and CTA are required");
       return;
     }
     setFormError("");
+    const id = Date.now().toString();
     const ad = {
       ...newAd,
-      id: Date.now().toString(),
       brand: brand.trim(),
       tagline: tagline.trim(),
       cta: cta.trim(),
       createdAt: new Date().toISOString(),
     };
-    setAdminAds(prev => [...prev, ad]);
+    await setDoc(doc(db, "adminAds", id), ad);
+    // onSnapshot updates adminAds state automatically
     setNewAd(BLANK_AD);
     setVideoUploadState("idle");
     setAdminView("ads");
   };
 
-  const saveAdminAdEdit = () => {
+  const saveAdminAdEdit = async () => {
     const { brand, tagline, cta } = newAd;
     if (!brand.trim() || !tagline.trim() || !cta.trim()) {
       setFormError("// brand, tagline, and CTA are required");
       return;
     }
     setFormError("");
-    setAdminAds(prev => prev.map(a => a.id === editingAdId
-      ? { ...a, ...newAd, brand: brand.trim(), tagline: tagline.trim(), cta: cta.trim() }
-      : a
-    ));
+    const existing = adminAds.find(a => a.id === editingAdId);
+    await setDoc(doc(db, "adminAds", editingAdId), {
+      ...existing,
+      ...newAd,
+      brand: brand.trim(),
+      tagline: tagline.trim(),
+      cta: cta.trim(),
+    });
     setEditingAdId(null);
     setNewAd(BLANK_AD);
     setVideoUploadState("idle");
@@ -850,7 +856,8 @@ export default function AdSimulator() {
         });
       } catch {}
     }
-    setAdminAds(prev => prev.filter(a => a.id !== id));
+    await deleteDoc(doc(db, "adminAds", id));
+    // onSnapshot updates adminAds state automatically
   };
 
   const uploadVideoToR2 = async (file) => {
