@@ -347,6 +347,7 @@ export default function AdSimulator() {
   const [creditBump, setCreditBump] = useState(false);
   const [view, setView] = useState("earn");
   const [adminView, setAdminView] = useState("ads");
+  const [editingAdId, setEditingAdId] = useState(null);
   const [newAd, setNewAd] = useState(BLANK_AD);
   const [formError, setFormError] = useState("");
   const [cleanupState, setCleanupState] = useState("idle"); // "idle" | "running" | "done"
@@ -608,6 +609,31 @@ export default function AdSimulator() {
     setAdminView("ads");
   };
 
+  const saveAdminAdEdit = () => {
+    const { brand, tagline, cta } = newAd;
+    if (!brand.trim() || !tagline.trim() || !cta.trim()) {
+      setFormError("// brand, tagline, and CTA are required");
+      return;
+    }
+    setFormError("");
+    setAdminAds(prev => prev.map(a => a.id === editingAdId
+      ? { ...a, ...newAd, brand: brand.trim(), tagline: tagline.trim(), cta: cta.trim() }
+      : a
+    ));
+    setEditingAdId(null);
+    setNewAd(BLANK_AD);
+    setVideoUploadState("idle");
+    setAdminView("ads");
+  };
+
+  const startEditAd = (ad) => {
+    setEditingAdId(ad.id);
+    setNewAd({ brand: ad.brand, tagline: ad.tagline, cta: ad.cta, category: ad.category, color: ad.color, logo: ad.logo, videoUrl: ad.videoUrl || "", rarity: ad.rarity || "common" });
+    setFormError("");
+    setVideoUploadState("idle");
+    setAdminView("create");
+  };
+
   const cleanupOrphanedVideos = async () => {
     setCleanupState("running");
     setCleanupResult(null);
@@ -791,7 +817,7 @@ export default function AdSimulator() {
               </button>
               <button
                 className={`tab-btn admin-tab ${adminView === "create" ? "active" : ""}`}
-                onClick={() => { cleanupPendingVideo(newAd.videoUrl); setAdminView("create"); setFormError(""); setNewAd(BLANK_AD); }}
+                onClick={() => { cleanupPendingVideo(newAd.videoUrl); setAdminView("create"); setFormError(""); setNewAd(BLANK_AD); setEditingAdId(null); }}
               >
                 + Create Ad
               </button>
@@ -837,6 +863,7 @@ export default function AdSimulator() {
                               </div>
                               <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                                 {ad.videoUrl && <span className="video-badge">▶ VIDEO</span>}
+                                <button className="delete-btn" style={{ borderColor: "#2a3a2a", color: "#4ade8066" }} onClick={e => { e.stopPropagation(); startEditAd(ad); }}>EDIT</button>
                                 <button className="delete-btn" onClick={e => { e.stopPropagation(); deleteAdminAd(ad.id); }}>DELETE</button>
                               </div>
                             </div>
@@ -850,8 +877,8 @@ export default function AdSimulator() {
               ) : (
                 /* Create Ad Form */
                 <div className="form-wrap">
-                  <div className="form-title">Create Admin Ad</div>
-                  <div className="form-sub">// this ad will enter the pool and serve at {Math.round(ADMIN_RATE * 100)}% rate</div>
+                  <div className="form-title">{editingAdId ? "Edit Ad" : "Create Admin Ad"}</div>
+                  <div className="form-sub">{editingAdId ? "// changes will apply to the existing ad immediately" : `// this ad will enter the pool and serve at ${Math.round(ADMIN_RATE * 100)}% rate`}</div>
 
                   {/* Live Preview */}
                   <div className="preview-wrap">
@@ -983,8 +1010,8 @@ export default function AdSimulator() {
                   {formError && <div className="form-error">{formError}</div>}
 
                   <div className="form-actions">
-                    <button className="btn-create" onClick={createAdminAd} disabled={videoUploadState === "uploading"} style={{ opacity: videoUploadState === "uploading" ? 0.5 : 1, cursor: videoUploadState === "uploading" ? "not-allowed" : "pointer" }}>PUBLISH AD</button>
-                    <button className="btn-cancel" onClick={() => { cleanupPendingVideo(newAd.videoUrl); setAdminView("ads"); setFormError(""); setVideoUploadState("idle"); }}>CANCEL</button>
+                    <button className="btn-create" onClick={editingAdId ? saveAdminAdEdit : createAdminAd} disabled={videoUploadState === "uploading"} style={{ opacity: videoUploadState === "uploading" ? 0.5 : 1, cursor: videoUploadState === "uploading" ? "not-allowed" : "pointer" }}>{editingAdId ? "SAVE CHANGES" : "PUBLISH AD"}</button>
+                    <button className="btn-cancel" onClick={() => { if (!editingAdId) cleanupPendingVideo(newAd.videoUrl); setEditingAdId(null); setAdminView("ads"); setFormError(""); setVideoUploadState("idle"); setNewAd(BLANK_AD); }}>CANCEL</button>
                   </div>
 
                   <div style={{ marginTop: "2rem", paddingTop: "1.5rem", borderTop: "1px solid #1a1a1a" }}>
