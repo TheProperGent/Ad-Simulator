@@ -15,6 +15,7 @@ const auth = getAuth(firebaseApp);
 const googleProvider = new GoogleAuthProvider();
 
 const DEBUG = true; // set to false to hide debug accounts in production
+const GOOGLE_ADMIN_UID = "jitOoGWrprhGdO4pUp5qCM2SMFl1";
 
 const ADMIN_RATE = 0.30;
 
@@ -379,12 +380,15 @@ export default function AdSimulator() {
       if (fbUser) {
         // Map Firebase user to app user shape, restoring saved credits
         const savedCredits = parseInt(localStorage.getItem(`sim_credits_${fbUser.uid}`) || "0", 10);
+        const isGoogleAdmin = fbUser.uid === GOOGLE_ADMIN_UID;
         setCurrentUser({
           id: fbUser.uid,
           username: fbUser.displayName || fbUser.email?.split("@")[0] || "user",
           photoURL: fbUser.photoURL || null,
           credits: savedCredits,
           isGoogle: true,
+          isGoogleAdmin,
+          isAdmin: isGoogleAdmin, // start in admin view if admin account
         });
       } else if (currentUser?.isGoogle) {
         // Only clear if we were signed in via Google (not debug account)
@@ -729,9 +733,17 @@ export default function AdSimulator() {
                   <span className="credits-value">{adminAds.length} ADS</span>
                 </div>
                 <div className="profile-chip">
-                  <div className="profile-avatar admin">AD</div>
-                  <span className="profile-name">@admin</span>
+                  {currentUser.photoURL
+                    ? <img src={currentUser.photoURL} alt="" style={{ width: 30, height: 30, borderRadius: "50%", objectFit: "cover" }} referrerPolicy="no-referrer" />
+                    : <div className="profile-avatar admin">AD</div>
+                  }
+                  <span className="profile-name">{currentUser.isGoogleAdmin ? currentUser.username : "@admin"}</span>
                 </div>
+                {currentUser.isGoogleAdmin && (
+                  <button className="logout-btn" onClick={() => setCurrentUser(p => ({ ...p, isAdmin: false }))} style={{ borderColor: "#4ade8044", color: "#4ade80" }}>
+                    USER VIEW
+                  </button>
+                )}
                 <button className="logout-btn" onClick={signOut}>SIGN OUT</button>
               </div>
             </header>
@@ -987,6 +999,11 @@ export default function AdSimulator() {
                   }
                   <span className="profile-name">{currentUser.isGoogle ? currentUser.username : `@${currentUser.username}`}</span>
                 </div>
+                {currentUser.isGoogleAdmin && (
+                  <button className="logout-btn" onClick={() => setCurrentUser(p => ({ ...p, isAdmin: true }))} style={{ borderColor: "#fbbc0444", color: "#fbbc04" }}>
+                    ADMIN VIEW
+                  </button>
+                )}
                 <button className="logout-btn" onClick={signOut}>SIGN OUT</button>
               </div>
             </header>
