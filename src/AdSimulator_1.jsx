@@ -1476,6 +1476,11 @@ export default function AdSimulator() {
                 <div className="ad-category">{currentAd.category}</div>
                 <div className="ad-cta-row">
                   <div className="ad-cta" style={{ background: currentAd.color }}>{currentAd.cta}</div>
+                  {currentAd.videoUrl && (
+                    <button className={`mute-btn${isMuted ? "" : " unmuted"}`} onClick={() => setIsMuted(p => !p)} title={isMuted ? "Unmute" : "Mute"}>
+                      {isMuted ? "🔇" : "🔊"}
+                    </button>
+                  )}
                   {isAdminAd && !userLibrary.some(i => i.id === currentAd.id) && (
                     <span className="new-collect-badge">✦ NEW</span>
                   )}
