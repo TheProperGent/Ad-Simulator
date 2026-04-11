@@ -1238,7 +1238,7 @@ export default function AdSimulator() {
           </aside>
           <div className="main">
             <header className="header">
-              <div className="header-logo">◉ Ad Simulator</div>
+              <a href="/about.html" className="header-logo" style={{ textDecoration: "none" }}>◉ Ad Simulator</a>
               <div className="header-right">
                 <div className="credits-display">
                   <span className="credits-label">Credits</span>
