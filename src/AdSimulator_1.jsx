@@ -19,6 +19,8 @@ const GOOGLE_ADMIN_UID = "jitOoGWrprhGdO4pUp5qCM2SMFl1";
 
 const ADMIN_RATE = 0.30;
 
+const BLANK_STATS = () => ({ lifetimeCredits: 0, rarityCount: { common: 0, uncommon: 0, rare: 0, epic: 0, legendary: 0, mythic: 0 }, adCount: {} });
+
 const MOCK_ADS = [
   { brand: "NovaTech", tagline: "The Future of Cloud Infrastructure", cta: "Start Free Trial", color: "#1a73e8", logo: "⚡", category: "Technology" },
   { brand: "GreenLeaf Co.", tagline: "Sustainable Products for Modern Living", cta: "Shop Now", color: "#34a853", logo: "🌿", category: "Lifestyle" },
@@ -289,6 +291,42 @@ const styles = `
   .rarity-btn.sel { color: #eeeaf6; }
   .sparkle-wrap { position: absolute; inset: 0; pointer-events: none; overflow: visible; z-index: 10; }
 
+  /* ── QUANTITY BADGE ── */
+  .qty-badge { position: absolute; top: 8px; left: 8px; z-index: 20; background: rgba(14,14,20,0.85); border: 1px solid #2a2a38; border-radius: 999px; font-family: 'Nunito', sans-serif; font-size: 0.7rem; font-weight: 800; color: #eeeaf6; padding: 0.15rem 0.55rem; backdrop-filter: blur(4px); }
+
+  /* ── MY ACCOUNT ── */
+  .account-view { flex: 1; padding: 2rem; overflow-y: auto; }
+  .account-section { margin-bottom: 2rem; }
+  .account-section-title { font-family: 'Nunito', sans-serif; font-size: 0.75rem; font-weight: 800; letter-spacing: 0.12em; color: #55556a; text-transform: uppercase; margin-bottom: 1rem; }
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 0.75rem; }
+  .stat-card { background: #13131a; border: 1px solid #1e1e2c; border-radius: 14px; padding: 1.1rem 1rem; text-align: center; }
+  .stat-card-value { font-family: 'JetBrains Mono', monospace; font-size: 1.6rem; font-weight: 700; color: #eeeaf6; line-height: 1; margin-bottom: 0.35rem; }
+  .stat-card-label { font-family: 'Nunito', sans-serif; font-size: 0.72rem; font-weight: 700; color: #55556a; }
+  .rarity-stat-row { display: flex; flex-direction: column; gap: 0.5rem; }
+  .rarity-stat-item { display: flex; align-items: center; gap: 0.75rem; background: #13131a; border: 1px solid #1e1e2c; border-radius: 10px; padding: 0.6rem 1rem; }
+  .rarity-stat-label { font-family: 'Nunito', sans-serif; font-size: 0.82rem; font-weight: 700; flex: 1; }
+  .rarity-stat-count { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; font-weight: 600; color: #eeeaf6; }
+  .rarity-stat-bar-wrap { flex: 2; height: 6px; background: #1e1e2c; border-radius: 999px; overflow: hidden; }
+  .rarity-stat-bar { height: 100%; border-radius: 999px; transition: width 0.4s ease; }
+
+  /* ── LEADERBOARD ── */
+  .leaderboard-view { flex: 1; padding: 2rem; overflow-y: auto; }
+  .lb-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+  .lb-tab { background: #13131a; border: 1px solid #1e1e2c; border-radius: 999px; font-family: 'Nunito', sans-serif; font-size: 0.78rem; font-weight: 700; color: #55556a; padding: 0.35rem 1rem; cursor: pointer; transition: all 0.15s; }
+  .lb-tab.active { background: #e63c3c18; border-color: #e63c3c44; color: #e63c3c; }
+  .lb-list { display: flex; flex-direction: column; gap: 0.5rem; }
+  .lb-row { display: flex; align-items: center; gap: 1rem; background: #13131a; border: 1px solid #1e1e2c; border-radius: 12px; padding: 0.75rem 1rem; transition: border-color 0.15s; }
+  .lb-row.is-me { border-color: #e63c3c44; background: #e63c3c08; }
+  .lb-rank { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; font-weight: 700; color: #55556a; width: 1.75rem; text-align: center; flex-shrink: 0; }
+  .lb-rank.gold { color: #fbbc04; }
+  .lb-rank.silver { color: #aaaacc; }
+  .lb-rank.bronze { color: #cd7f32; }
+  .lb-avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; flex-shrink: 0; background: #252530; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.75rem; color: #e63c3c; }
+  .lb-name { font-family: 'Nunito', sans-serif; font-size: 0.88rem; font-weight: 700; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lb-value { font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; font-weight: 700; color: #eeeaf6; flex-shrink: 0; }
+  .lb-you { font-family: 'Nunito', sans-serif; font-size: 0.65rem; font-weight: 800; color: #e63c3c; background: #e63c3c18; border: 1px solid #e63c3c33; border-radius: 999px; padding: 0.1rem 0.45rem; flex-shrink: 0; }
+  .lb-empty { font-family: 'Nunito', sans-serif; font-size: 0.88rem; font-weight: 600; color: #383848; text-align: center; padding: 3rem 1rem; }
+
   /* ── LOADING ── */
   .loading-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; font-family: 'Nunito', sans-serif; font-size: 0.85rem; font-weight: 700; color: #383848; letter-spacing: 0.1em; position: relative; z-index: 1; }
 `;
@@ -354,6 +392,79 @@ function AdSenseUnit() {
   );
 }
 
+const LB_CATEGORIES = [
+  { key: "lifetimeCredits", label: "Lifetime Credits" },
+  { key: "total",           label: "Total Collected"  },
+  { key: "unique",          label: "Unique Ads"       },
+  { key: "legendary",       label: "Legendary Finds"  },
+  { key: "mythic",          label: "Mythic Finds"     },
+];
+
+function LeaderboardView({ entries, currentUserId }) {
+  const [cat, setCat] = useState(LB_CATEGORIES[0].key);
+  const sorted = [...entries].sort((a, b) => b[cat] - a[cat]).slice(0, 10);
+  const rankColor = i => i === 0 ? "gold" : i === 1 ? "silver" : i === 2 ? "bronze" : "";
+  const rankLabel = i => i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `#${i + 1}`;
+
+  // find current user's rank even if outside top 10
+  const myRank = [...entries].sort((a, b) => b[cat] - a[cat]).findIndex(e => e.uid === currentUserId);
+
+  return (
+    <div className="leaderboard-view">
+      <div className="lb-tabs">
+        {LB_CATEGORIES.map(c => (
+          <button key={c.key} className={`lb-tab ${cat === c.key ? "active" : ""}`} onClick={() => setCat(c.key)}>
+            {c.label}
+          </button>
+        ))}
+      </div>
+
+      {sorted.length === 0 ? (
+        <div className="lb-empty">No data yet — start earning credits!</div>
+      ) : (
+        <div className="lb-list">
+          {sorted.map((e, i) => {
+            const isMe = e.uid === currentUserId;
+            return (
+              <div key={e.uid} className={`lb-row ${isMe ? "is-me" : ""}`}>
+                <span className={`lb-rank ${rankColor(i)}`}>{rankLabel(i)}</span>
+                {e.photoURL
+                  ? <img src={e.photoURL} className="lb-avatar" alt="" referrerPolicy="no-referrer" />
+                  : <div className="lb-avatar">{(e.name || "?").slice(0, 2).toUpperCase()}</div>
+                }
+                <span className="lb-name">{e.name}</span>
+                {isMe && <span className="lb-you">YOU</span>}
+                <span className="lb-value">{e[cat]}</span>
+              </div>
+            );
+          })}
+
+          {/* show user's position if outside top 10 */}
+          {myRank >= 10 && (() => {
+            const me = entries.find(e => e.uid === currentUserId);
+            if (!me) return null;
+            return (
+              <>
+                <div style={{ textAlign: "center", color: "#383848", fontSize: "0.75rem", padding: "0.25rem" }}>· · ·</div>
+                <div className="lb-row is-me">
+                  <span className="lb-rank">#{myRank + 1}</span>
+                  {me.photoURL
+                    ? <img src={me.photoURL} className="lb-avatar" alt="" referrerPolicy="no-referrer" />
+                    : <div className="lb-avatar">{(me.name || "?").slice(0, 2).toUpperCase()}</div>
+                  }
+                  <span className="lb-name">{me.name}</span>
+                  <span className="lb-you">YOU</span>
+                  <span className="lb-value">{me[cat]}</span>
+                </div>
+              </>
+            );
+          })()}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function AdSimulator() {
   const [users, setUsers] = useState(DEFAULT_USERS);
   const [currentUser, setCurrentUser] = useState(null);
@@ -380,6 +491,8 @@ export default function AdSimulator() {
   const [videoUploadState, setVideoUploadState] = useState("idle"); // "idle" | "uploading" | "error"
   const [adVideoSize, setAdVideoSize] = useState(null); // { w, h } natural video dimensions
   const [isPreview, setIsPreview] = useState(false);
+  const [userStats, setUserStats] = useState(BLANK_STATS());
+  const [allUserStats, setAllUserStats] = useState({}); // uid -> stats, for leaderboard
 
   const currentAdRef = useRef(null);
   const isAdminAdRef = useRef(false);
@@ -452,11 +565,13 @@ export default function AdSimulator() {
     try { localStorage.setItem("sim_users", JSON.stringify(users)); } catch {}
   }, [users, storageReady]);
 
-  // ── Load user library on login ──
+  // ── Load user library + stats on login ──
   useEffect(() => {
-    if (!currentUser || currentUser.isAdmin) { setUserLibrary([]); return; }
-    const r = localStorage.getItem(`sim_lib_${currentUser.id}`);
-    setUserLibrary(r ? JSON.parse(r) : []);
+    if (!currentUser || currentUser.isAdmin) { setUserLibrary([]); setUserStats(BLANK_STATS()); return; }
+    const lib = localStorage.getItem(`sim_lib_${currentUser.id}`);
+    setUserLibrary(lib ? JSON.parse(lib) : []);
+    const st = localStorage.getItem(`sim_stats_${currentUser.id}`);
+    setUserStats(st ? { ...BLANK_STATS(), ...JSON.parse(st) } : BLANK_STATS());
   }, [currentUser?.id]);
 
   // ── Persist user library ──
@@ -464,6 +579,25 @@ export default function AdSimulator() {
     if (!currentUser || currentUser.isAdmin || !storageReady) return;
     try { localStorage.setItem(`sim_lib_${currentUser.id}`, JSON.stringify(userLibrary)); } catch {}
   }, [userLibrary, currentUser, storageReady]);
+
+  // ── Persist user stats + publish to leaderboard store ──
+  useEffect(() => {
+    if (!currentUser || currentUser.isAdmin || !storageReady) return;
+    try {
+      localStorage.setItem(`sim_stats_${currentUser.id}`, JSON.stringify(userStats));
+      // publish to shared leaderboard index
+      const idx = JSON.parse(localStorage.getItem("sim_leaderboard") || "{}");
+      idx[currentUser.id] = { name: currentUser.username, photoURL: currentUser.photoURL || null, ...userStats };
+      localStorage.setItem("sim_leaderboard", JSON.stringify(idx));
+      setAllUserStats(idx);
+    } catch {}
+  }, [userStats, currentUser, storageReady]);
+
+  // ── Load leaderboard on mount ──
+  useEffect(() => {
+    const idx = JSON.parse(localStorage.getItem("sim_leaderboard") || "{}");
+    setAllUserStats(idx);
+  }, []);
 
   // ── Ad timer ──
   useEffect(() => {
@@ -544,9 +678,24 @@ export default function AdSimulator() {
       time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     }, ...prev.slice(0, 4)]);
 
-    if (isAdmin && ad && !lib.some(item => item.id === ad.id)) {
-      setUserLibrary(prev => [...prev, ad]);
-      setShowNewCollectOverlay(true);
+    // update stats
+    setUserStats(prev => {
+      const rarity = (isAdmin && ad?.rarity) ? ad.rarity : null;
+      return {
+        lifetimeCredits: prev.lifetimeCredits + 1,
+        rarityCount: rarity
+          ? { ...prev.rarityCount, [rarity]: (prev.rarityCount[rarity] || 0) + 1 }
+          : prev.rarityCount,
+        adCount: (isAdmin && ad)
+          ? { ...prev.adCount, [ad.id]: (prev.adCount[ad.id] || 0) + 1 }
+          : prev.adCount,
+      };
+    });
+
+    if (isAdmin && ad) {
+      const isNew = !lib.some(item => item.id === ad.id);
+      setUserLibrary(prev => [...prev, ad]); // always add — duplicates allowed
+      if (isNew) setShowNewCollectOverlay(true);
     }
   };
 
@@ -1095,12 +1244,12 @@ export default function AdSimulator() {
             </header>
 
             <div className="tabs">
-              <button className={`tab-btn ${view === "earn" ? "active" : ""}`} onClick={() => setView("earn")}>
-                Earn Credits
-              </button>
+              <button className={`tab-btn ${view === "earn" ? "active" : ""}`} onClick={() => setView("earn")}>Earn Credits</button>
               <button className={`tab-btn ${view === "collection" ? "active" : ""}`} onClick={() => setView("collection")}>
-                Collection<span className="tab-count">({userLibrary.length})</span>
+                Collection<span className="tab-count">({[...new Set(userLibrary.map(a => a.id))].length})</span>
               </button>
+              <button className={`tab-btn ${view === "account" ? "active" : ""}`} onClick={() => setView("account")}>My Account</button>
+              <button className={`tab-btn ${view === "leaderboard" ? "active" : ""}`} onClick={() => setView("leaderboard")}>Leaderboard</button>
             </div>
 
             {view === "earn" ? (
@@ -1141,51 +1290,135 @@ export default function AdSimulator() {
                   </div>
                 )}
               </>
-            ) : (
+            ) : view === "collection" ? (
               /* Collection View */
               <div className="collection-view">
                 <div className="section-header">
                   <span className="section-title">// your ad collection</span>
-                  <span className="section-sub">admin ads encountered while watching</span>
+                  <span className="section-sub">{userLibrary.length} total · {[...new Set(userLibrary.map(a => a.id))].length} unique</span>
                 </div>
-
                 {userLibrary.length === 0 ? (
                   <div className="empty-state">
                     <div className="empty-icon">📦</div>
-                    <div className="empty-text">
-                      // no ads collected yet<br />
-                      // run ads to discover<br />
-                      // admin-made ads in the pool
-                    </div>
+                    <div className="empty-text">No ads collected yet.<br />Run ads to discover admin ads in the pool.</div>
                   </div>
                 ) : (
                   <div className="collection-grid">
-                    {userLibrary.map(ad => {
-                      const rar = RARITY_MAP[ad.rarity || "common"];
-                      return (
-                      <div key={ad.id} className="coll-card" style={{ position: "relative", overflow: "visible", cursor: "pointer", ...getRarityStyle(ad.rarity || "common") }} onClick={() => previewAd(ad, true)}>
-                        {rar.sparkle && <RaritySparkles color={rar.color} />}
-                        <div style={{ borderRadius: "2px", overflow: "hidden", position: "relative", zIndex: 1 }}>
-                          <div className="coll-banner" style={{ background: ad.color + "18" }}>
-                            <div className="coll-banner-bg" style={{ background: `radial-gradient(circle at 50% 50%, ${ad.color}, transparent 70%)`, opacity: 0.22, position: "absolute", inset: 0 }} />
-                            <div className="coll-icon">{ad.logo}</div>
-                            <div className="coll-brand">{ad.brand}</div>
-                          </div>
-                          <div className="coll-body">
-                            <div className="coll-tagline">{ad.tagline}</div>
-                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                              <span className="coll-cat">{ad.category}</span>
-                              <span className="rarity-badge" style={{ color: rar.color, background: rar.color + "18", border: `1px solid ${rar.color}33` }}>{rar.label}</span>
+                    {(() => {
+                      const seen = {};
+                      userLibrary.forEach(ad => { seen[ad.id] = (seen[ad.id] || 0) + 1; });
+                      const unique = userLibrary.filter((ad, i, arr) => arr.findIndex(a => a.id === ad.id) === i);
+                      return unique.map(ad => {
+                        const rar = RARITY_MAP[ad.rarity || "common"];
+                        const qty = seen[ad.id] || 1;
+                        return (
+                          <div key={ad.id} className="coll-card" style={{ position: "relative", overflow: "visible", cursor: "pointer", ...getRarityStyle(ad.rarity || "common") }} onClick={() => previewAd(ad, true)}>
+                            {rar.sparkle && <RaritySparkles color={rar.color} />}
+                            {qty > 1 && <div className="qty-badge">×{qty}</div>}
+                            <div style={{ borderRadius: "2px", overflow: "hidden", position: "relative", zIndex: 1 }}>
+                              <div className="coll-banner" style={{ background: ad.color + "18" }}>
+                                <div className="coll-banner-bg" style={{ background: `radial-gradient(circle at 50% 50%, ${ad.color}, transparent 70%)`, opacity: 0.22, position: "absolute", inset: 0 }} />
+                                <div className="coll-icon">{ad.logo}</div>
+                                <div className="coll-brand">{ad.brand}</div>
+                              </div>
+                              <div className="coll-body">
+                                <div className="coll-tagline">{ad.tagline}</div>
+                                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                                  <span className="coll-cat">{ad.category}</span>
+                                  <span className="rarity-badge" style={{ color: rar.color, background: rar.color + "18", border: `1px solid ${rar.color}33` }}>{rar.label}</span>
+                                </div>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </div>
-                      );
-                    })}
+                        );
+                      });
+                    })()}
                   </div>
                 )}
               </div>
-            )}
+
+            ) : view === "account" ? (
+              /* My Account */
+              <div className="account-view">
+                <div className="account-section">
+                  <div className="account-section-title">Overview</div>
+                  <div className="stat-grid">
+                    <div className="stat-card">
+                      <div className="stat-card-value">{userStats.lifetimeCredits}</div>
+                      <div className="stat-card-label">Lifetime Credits</div>
+                    </div>
+                    <div className="stat-card">
+                      <div className="stat-card-value">{userLibrary.length}</div>
+                      <div className="stat-card-label">Total Collected</div>
+                    </div>
+                    <div className="stat-card">
+                      <div className="stat-card-value">{[...new Set(userLibrary.map(a => a.id))].length}</div>
+                      <div className="stat-card-label">Unique Ads</div>
+                    </div>
+                    <div className="stat-card">
+                      <div className="stat-card-value">{currentUser.credits}</div>
+                      <div className="stat-card-label">Current Credits</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="account-section">
+                  <div className="account-section-title">Rarity Breakdown</div>
+                  <div className="rarity-stat-row">
+                    {RARITIES.map(r => {
+                      const count = userStats.rarityCount[r.key] || 0;
+                      const max = Math.max(...RARITIES.map(x => userStats.rarityCount[x.key] || 0), 1);
+                      return (
+                        <div key={r.key} className="rarity-stat-item" style={{ borderColor: count > 0 ? r.color + "33" : "#1e1e2c" }}>
+                          <span className="rarity-stat-label" style={{ color: count > 0 ? r.color : "#55556a" }}>{r.label}</span>
+                          <div className="rarity-stat-bar-wrap">
+                            <div className="rarity-stat-bar" style={{ width: `${(count / max) * 100}%`, background: r.color }} />
+                          </div>
+                          <span className="rarity-stat-count">{count}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {Object.keys(userStats.adCount).length > 0 && (
+                  <div className="account-section">
+                    <div className="account-section-title">Most Collected Ads</div>
+                    <div className="rarity-stat-row">
+                      {Object.entries(userStats.adCount)
+                        .sort(([,a],[,b]) => b - a)
+                        .slice(0, 5)
+                        .map(([adId, count]) => {
+                          const ad = adminAds.find(a => a.id === adId) || userLibrary.find(a => a.id === adId);
+                          if (!ad) return null;
+                          const rar = RARITY_MAP[ad.rarity || "common"];
+                          return (
+                            <div key={adId} className="rarity-stat-item">
+                              <span style={{ fontSize: "1.2rem" }}>{ad.logo}</span>
+                              <span className="rarity-stat-label">{ad.brand}</span>
+                              <span className="rarity-badge" style={{ color: rar.color, background: rar.color + "18", border: `1px solid ${rar.color}33` }}>{rar.label}</span>
+                              <span className="rarity-stat-count">×{count}</span>
+                            </div>
+                          );
+                        })}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+            ) : view === "leaderboard" ? (
+              <LeaderboardView
+                entries={Object.entries(allUserStats).map(([uid, s]) => ({
+                  uid, name: s.name || "?", photoURL: s.photoURL || null,
+                  lifetimeCredits: s.lifetimeCredits || 0,
+                  total: Object.values(s.adCount || {}).reduce((a, b) => a + b, 0),
+                  unique: Object.keys(s.adCount || {}).length,
+                  mythic: s.rarityCount?.mythic || 0,
+                  legendary: s.rarityCount?.legendary || 0,
+                }))}
+                currentUserId={currentUser.id}
+              />
+            ) : null}
           </div>
           </div>
         )}
