@@ -98,6 +98,9 @@ const styles = `
   .profile-name { font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 0.88rem; }
   .logout-btn { background: none; border: 1px solid #2a2a38; border-radius: 999px; color: #55556a; padding: 0.35rem 0.9rem; font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 0.75rem; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
   .logout-btn:hover { border-color: #e63c3c66; color: #e63c3c; }
+  .mute-btn { background: none; border: 1px solid #2a2a38; border-radius: 999px; color: #55556a; padding: 0.35rem 0.75rem; font-size: 1rem; cursor: pointer; transition: all 0.15s; line-height: 1; }
+  .mute-btn:hover { border-color: #ffffff33; color: #ccc; }
+  .mute-btn.unmuted { border-color: #4ade8044; color: #4ade80; }
 
   /* ── TABS ── */
   .tabs { display: flex; border-bottom: 1px solid #1e1e28; padding: 0 2rem; flex-shrink: 0; }
@@ -469,6 +472,7 @@ export default function AdSimulator() {
   const [userLibrary, setUserLibrary] = useState([]);
   const [newUsername, setNewUsername] = useState("");
   const [adState, setAdState] = useState("idle");
+  const [isMuted, setIsMuted] = useState(false);
   const [currentAd, setCurrentAd] = useState(null);
   const [isAdminAd, setIsAdminAd] = useState(false);
   const [showNewCollectOverlay, setShowNewCollectOverlay] = useState(false);
@@ -970,6 +974,9 @@ export default function AdSimulator() {
                   }
                   <span className="profile-name">{currentUser.isGoogleAdmin ? currentUser.username : "@admin"}</span>
                 </div>
+                <button className={`mute-btn${isMuted ? "" : " unmuted"}`} onClick={() => setIsMuted(p => !p)} title={isMuted ? "Unmute" : "Mute"}>
+                  {isMuted ? "🔇" : "🔊"}
+                </button>
                 {currentUser.isGoogleAdmin && (
                   <button className="logout-btn" onClick={() => setCurrentUser(p => ({ ...p, isAdmin: false }))} style={{ borderColor: "#4ade8044", color: "#4ade80" }}>
                     USER VIEW
@@ -1059,7 +1066,7 @@ export default function AdSimulator() {
                         className="preview-video"
                         src={newAd.videoUrl}
                         controls
-                        muted
+                        muted={isMuted}
                         key={newAd.videoUrl}
                       />
                     ) : (
@@ -1231,6 +1238,9 @@ export default function AdSimulator() {
                   }
                   <span className="profile-name">{currentUser.isGoogle ? currentUser.username : `@${currentUser.username}`}</span>
                 </div>
+                <button className={`mute-btn${isMuted ? "" : " unmuted"}`} onClick={() => setIsMuted(p => !p)} title={isMuted ? "Unmute" : "Mute"}>
+                  {isMuted ? "🔇" : "🔊"}
+                </button>
                 {currentUser.isGoogleAdmin && (
                   <button className="logout-btn" onClick={() => setCurrentUser(p => ({ ...p, isAdmin: true }))} style={{ borderColor: "#fbbc0444", color: "#fbbc04" }}>
                     ADMIN VIEW
@@ -1437,7 +1447,7 @@ export default function AdSimulator() {
                   src={currentAd.videoUrl}
                   autoPlay
                   playsInline
-                  muted
+                  muted={isMuted}
                   key={currentAd.videoUrl}
                   onLoadedMetadata={e => {
                     adDurationRef.current = e.target.duration * 1000;
