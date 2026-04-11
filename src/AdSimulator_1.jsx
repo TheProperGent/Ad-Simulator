@@ -276,7 +276,6 @@ const styles = `
   @keyframes sparkle-float-large { 0%,100% { opacity: 0; transform: scale(0) rotate(0deg); } 25% { opacity: 1; transform: scale(1.3) rotate(120deg); } 65% { opacity: 0.9; transform: scale(1) rotate(260deg); } }
   @keyframes new-collect-in { 0% { opacity: 0; transform: scale(0.7) translateY(30px); } 60% { opacity: 1; transform: scale(1.05) translateY(-6px); } 100% { opacity: 1; transform: scale(1) translateY(0); } }
   @keyframes new-collect-shimmer { 0%,100% { background-position: 200% center; } 50% { background-position: 0% center; } }
-  .new-collect-overlay { position: fixed; inset: 0; z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1.5rem; background: rgba(0,0,0,0.75); backdrop-filter: blur(12px); animation: fadeIn 0.25s ease; }
   .new-collect-card { position: relative; background: #16161e; border-radius: 24px; padding: 2.5rem 2rem 2rem; text-align: center; max-width: 360px; width: 100%; box-shadow: 0 32px 80px rgba(0,0,0,0.6); animation: new-collect-in 0.5s cubic-bezier(0.34,1.56,0.64,1); overflow: visible; }
   .new-collect-burst { font-size: 4rem; margin-bottom: 0.5rem; animation: new-collect-in 0.5s cubic-bezier(0.34,1.56,0.64,1); display: block; }
   .new-collect-eyebrow { font-family: 'Nunito', sans-serif; font-size: 0.78rem; font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase; color: #8888aa; margin-bottom: 0.75rem; }
@@ -555,6 +554,7 @@ export default function AdSimulator() {
     setAdState("idle");
     setCurrentAd(null);
     setShowNewCollectOverlay(false);
+    setIsPreview(false);
   };
 
   const createUser = () => {
@@ -1252,43 +1252,42 @@ export default function AdSimulator() {
         )}
 
         {/* ── NEW COLLECT OVERLAY ── */}
-        {showNewCollectOverlay && currentAd && (() => {
-          const rar = RARITY_MAP[currentAd.rarity || "common"];
-          const emojis = { common: "🎉", uncommon: "🌟", rare: "💎", epic: "✨", legendary: "🏆", mythic: "🔥" };
-          return (
-            <div className="new-collect-overlay">
-              <div className="new-collect-card" style={{ border: `2px solid ${rar.color}66`, boxShadow: `0 0 60px ${rar.color}33, 0 32px 80px rgba(0,0,0,0.6)`, "--rar-color": rar.color, "--rar-color-dim": rar.color + "99" }}>
-                <RaritySparkles color={rar.color} large />
-                <span className="new-collect-burst">{emojis[rar.key]}</span>
-                <div className="new-collect-eyebrow">New to your collection!</div>
-                <div className="new-collect-rarity" style={{ "--rar-color": rar.color }}>{rar.label}</div>
-                <div className="new-collect-brand">{currentAd.brand}</div>
-                <button
-                  className="new-collect-dismiss"
-                  style={{ "--rar-color": rar.color, "--rar-color-dim": rar.color + "99" }}
-                  onClick={() => setShowNewCollectOverlay(false)}
-                >
-                  Awesome! ✦
-                </button>
-              </div>
-            </div>
-          );
-        })()}
-
         {/* ── COMPLETE MODAL ── */}
-        {adState === "complete" && !showNewCollectOverlay && (
+        {adState === "complete" && (
           <div className="modal-backdrop">
-            <div className="complete-modal">
-              <div className="complete-icon">✦</div>
-              <h2 className="complete-title">Credit Earned</h2>
-              {isAdminAd && (() => { const rar = RARITY_MAP[currentAd?.rarity || "common"]; return <span className="rarity-badge" style={{ color: rar.color, background: rar.color + "18", border: `1px solid ${rar.color}33`, marginBottom: "0.75rem" }}>{rar.label}</span>; })()}
-              <p className="complete-sub">
-                Ad impression from {currentAd?.brand}<br />
-                was served successfully.
-              </p>
-              <div className="complete-credit">+1 CR</div>
-              <button className="btn-primary" onClick={dismissComplete}>RUN ANOTHER AD</button>
-            </div>
+            {showNewCollectOverlay && currentAd ? (() => {
+              const rar = RARITY_MAP[currentAd.rarity || "common"];
+              const emojis = { common: "🎉", uncommon: "🌟", rare: "💎", epic: "✨", legendary: "🏆", mythic: "🔥" };
+              return (
+                <div className="new-collect-card" style={{ border: `2px solid ${rar.color}66`, boxShadow: `0 0 60px ${rar.color}33, 0 32px 80px rgba(0,0,0,0.6)` }}>
+                  <RaritySparkles color={rar.color} large />
+                  <span className="new-collect-burst">{emojis[rar.key]}</span>
+                  <div className="new-collect-eyebrow">New to your collection!</div>
+                  <div className="new-collect-rarity" style={{ "--rar-color": rar.color }}>{rar.label}</div>
+                  <div className="new-collect-brand">{currentAd.brand}</div>
+                  <div className="complete-credit" style={{ marginTop: "1rem", marginBottom: "1.25rem" }}>+1 CR</div>
+                  <button
+                    className="new-collect-dismiss"
+                    style={{ "--rar-color": rar.color, "--rar-color-dim": rar.color + "99" }}
+                    onClick={dismissComplete}
+                  >
+                    Awesome! ✦
+                  </button>
+                </div>
+              );
+            })() : (
+              <div className="complete-modal">
+                <div className="complete-icon">✦</div>
+                <h2 className="complete-title">Credit Earned</h2>
+                {isAdminAd && (() => { const rar = RARITY_MAP[currentAd?.rarity || "common"]; return <span className="rarity-badge" style={{ color: rar.color, background: rar.color + "18", border: `1px solid ${rar.color}33`, marginBottom: "0.75rem" }}>{rar.label}</span>; })()}
+                <p className="complete-sub">
+                  Ad impression from {currentAd?.brand}<br />
+                  was served successfully.
+                </p>
+                <div className="complete-credit">+1 CR</div>
+                <button className="btn-primary" onClick={dismissComplete}>RUN ANOTHER AD</button>
+              </div>
+            )}
           </div>
         )}
       </div>
