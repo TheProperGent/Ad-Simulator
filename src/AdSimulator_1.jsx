@@ -640,7 +640,9 @@ export default function AdSimulator() {
         ad = pool[Math.floor(Math.random() * pool.length)];
         adminFlag = true;
       } else {
-        ad = MOCK_ADS[Math.floor(Math.random() * MOCK_ADS.length)];
+        // No ads at the rolled rarity — pick any admin ad rather than falling back to mocks
+        ad = adminAds[Math.floor(Math.random() * adminAds.length)];
+        adminFlag = true;
       }
     } else {
       ad = MOCK_ADS[Math.floor(Math.random() * MOCK_ADS.length)];
@@ -1447,12 +1449,21 @@ export default function AdSimulator() {
                   src={currentAd.videoUrl}
                   autoPlay
                   playsInline
+                  muted
                   key={currentAd.videoUrl}
                   onLoadedMetadata={e => {
                     adDurationRef.current = e.target.duration * 1000;
                     adStartRef.current = Date.now();
                     setCountdown(Math.ceil(e.target.duration));
                     setAdVideoSize({ w: e.target.videoWidth, h: e.target.videoHeight });
+                  }}
+                  onError={() => {
+                    // If video fails to load, fall back to a 5-second timer so the ad doesn't hang
+                    if (!adStartRef.current) {
+                      adDurationRef.current = 5000;
+                      adStartRef.current = Date.now();
+                      setCountdown(5);
+                    }
                   }}
                 />
               ) : (
