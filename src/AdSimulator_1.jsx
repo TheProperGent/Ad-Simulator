@@ -16,7 +16,6 @@ const auth = getAuth(firebaseApp);
 const db = getFirestore(firebaseApp);
 const googleProvider = new GoogleAuthProvider();
 
-const DEBUG = true; // set to false to hide debug accounts in production
 const GOOGLE_ADMIN_UID = "jitOoGWrprhGdO4pUp5qCM2SMFl1";
 
 const ADMIN_RATE = 0.30;
@@ -24,13 +23,6 @@ const ADMIN_RATE = 0.30;
 const BLANK_STATS = () => ({ lifetimeCredits: 0, rarityCount: { common: 0, uncommon: 0, rare: 0, epic: 0, legendary: 0, mythic: 0 }, adCount: {} });
 
 
-const DEFAULT_USERS = [
-  { id: "1", username: "alex_dev", credits: 12 },
-  { id: "2", username: "maya_r", credits: 5 },
-  { id: "3", username: "jpreston", credits: 31 },
-];
-
-const ADMIN_USER = { id: "admin", username: "admin", isAdmin: true, credits: 0 };
 const PRESET_COLORS = ["#e63c3c","#1a73e8","#34a853","#fbbc04","#9c27b0","#ff6d00","#00bcd4","#e91e63","#00897b","#546e7a"];
 const PRESET_LOGOS = ["⚡","🌿","🎮","💰","🚀","💎","🔥","🎯","🌊","✨","🎪","🦋","🍕","🎵","🏆","🐉","🦊","🌈","🎭","⚽"];
 const CATEGORIES = ["Technology","Lifestyle","Gaming","Finance","Fashion","Food","Travel","Health","Entertainment","Sports"];
@@ -66,17 +58,11 @@ const styles = `
   .btn-google:hover { background: #f0f0f0; transform: translateY(-1px); }
   .btn-google:active { transform: translateY(0); }
   .btn-google svg { flex-shrink: 0; }
-  .user-list { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 1.5rem; }
-  .user-btn { display: flex; align-items: center; gap: 1rem; background: #1e1e28; border: 1px solid #2a2a38; border-radius: 12px; padding: 0.85rem 1rem; cursor: pointer; transition: all 0.15s; text-align: left; width: 100%; color: #eeeaf6; font-family: 'Nunito', sans-serif; }
-  .user-btn:hover { border-color: #e63c3c66; background: #221820; transform: translateY(-1px); }
-  .user-btn.admin-btn:hover { border-color: #fbbc0466; background: #1e1a10; }
   .user-avatar { width: 36px; height: 36px; background: #252530; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.8rem; color: #e63c3c; flex-shrink: 0; }
   .user-avatar.admin-av { color: #fbbc04; background: #1e1a10; border: 1px solid #fbbc0433; }
   .user-name { font-weight: 700; font-size: 0.95rem; }
   .user-credits-badge { margin-left: auto; font-family: 'Nunito', sans-serif; font-size: 0.75rem; color: #7e7e96; font-weight: 600; }
   .admin-badge { margin-left: auto; font-family: 'Nunito', sans-serif; font-size: 0.7rem; font-weight: 700; color: #fbbc04; letter-spacing: 0.05em; background: #fbbc0418; border: 1px solid #fbbc0433; padding: 0.2rem 0.6rem; border-radius: 999px; }
-  .auth-divider { border: none; border-top: 1px solid #22222e; margin: 1.5rem 0 1.25rem; }
-  .new-user-form { display: flex; gap: 0.5rem; }
   .input { flex: 1; background: #1e1e28; border: 1px solid #2a2a38; border-radius: 10px; padding: 0.75rem 1rem; color: #eeeaf6; font-family: 'Nunito', sans-serif; font-size: 0.9rem; outline: none; transition: border-color 0.15s; }
   .input::placeholder { color: #5a5a72; }
   .input:focus { border-color: #e63c3c88; }
@@ -477,12 +463,10 @@ function LeaderboardView({ entries, currentUserId }) {
 }
 
 export default function AdSimulator() {
-  const [users, setUsers] = useState(DEFAULT_USERS);
   const [currentUser, setCurrentUser] = useState(null);
   const [firebaseUser, setFirebaseUser] = useState(undefined); // undefined = loading, null = signed out
   const [adminAds, setAdminAds] = useState([]);
   const [userLibrary, setUserLibrary] = useState([]);
-  const [newUsername, setNewUsername] = useState("");
   const [adState, setAdState] = useState("idle");
   const [isMuted, setIsMuted] = useState(false);
   const [currentAd, setCurrentAd] = useState(null);
@@ -546,26 +530,17 @@ export default function AdSimulator() {
           isGoogleAdmin,
           isAdmin: isGoogleAdmin, // start in admin view if admin account
         });
-      } else if (currentUser?.isGoogle) {
-        // Only clear if we were signed in via Google (not debug account)
+      } else {
         setCurrentUser(null);
       }
     });
     return () => unsub();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Load debug users from localStorage ──
+  // ── Mark storage ready ──
   useEffect(() => {
-    const r = localStorage.getItem("sim_users");
-    if (r) setUsers(JSON.parse(r));
     setStorageReady(true);
   }, []);
-
-  // ── Persist debug users ──
-  useEffect(() => {
-    if (!storageReady) return;
-    try { localStorage.setItem("sim_users", JSON.stringify(users)); } catch {}
-  }, [users, storageReady]);
 
   // ── Real-time admin ads listener (Firestore) ──
   const [adminAdsLoaded, setAdminAdsLoaded] = useState(false);
@@ -674,10 +649,9 @@ export default function AdSimulator() {
     const user = currentUserRef.current;
     const lib = userLibraryRef.current;
 
-    if (!user.isGoogle) setUsers(prev => prev.map(u => u.id === user.id ? { ...u, credits: u.credits + 1 } : u));
     const newCredits = user.credits + 1;
     setCurrentUser(prev => ({ ...prev, credits: newCredits }));
-    if (user.isGoogle) try { localStorage.setItem(`sim_credits_${user.id}`, String(newCredits)); } catch {}
+    try { localStorage.setItem(`sim_credits_${user.id}`, String(newCredits)); } catch {}
     setCreditBump(true);
     setTimeout(() => setCreditBump(false), 800);
 
@@ -716,18 +690,6 @@ export default function AdSimulator() {
     setIsPreview(false);
   };
 
-  const createUser = () => {
-    const name = newUsername.trim();
-    if (!name || name.toLowerCase() === "admin") return;
-    const user = {
-      id: Date.now().toString(),
-      username: name.toLowerCase().replace(/\s+/g, "_"),
-      credits: 0,
-    };
-    setUsers(p => [...p, user]);
-    setCurrentUser(user);
-    setNewUsername("");
-  };
 
   const signOut = async () => {
     if (currentUser?.isGoogle) await firebaseSignOut(auth);
@@ -948,37 +910,6 @@ export default function AdSimulator() {
                 </button>
               )}
 
-              {DEBUG && (
-                <>
-                  <hr className="auth-divider" />
-                  <p className="auth-sub" style={{ marginBottom: "1rem" }}>// debug accounts</p>
-                  <div className="user-list">
-                    <button className="user-btn admin-btn" onClick={() => setCurrentUser(ADMIN_USER)}>
-                      <div className="user-avatar admin-av">AD</div>
-                      <div><div className="user-name">@admin</div></div>
-                      <div className="admin-badge">ADMIN</div>
-                    </button>
-                    {users.map(u => (
-                      <button key={u.id} className="user-btn" onClick={() => setCurrentUser(u)}>
-                        <div className="user-avatar">{u.username.slice(0, 2).toUpperCase()}</div>
-                        <div><div className="user-name">@{u.username}</div></div>
-                        <div className="user-credits-badge">{u.credits} CR</div>
-                      </button>
-                    ))}
-                  </div>
-                  <hr className="auth-divider" />
-                  <div className="new-user-form">
-                    <input
-                      className="input"
-                      placeholder="new username"
-                      value={newUsername}
-                      onChange={e => setNewUsername(e.target.value)}
-                      onKeyDown={e => e.key === "Enter" && createUser()}
-                    />
-                    <button className="btn-sm" onClick={createUser}>CREATE</button>
-                  </div>
-                </>
-              )}
             </div>
           </div>
 
@@ -1314,26 +1245,22 @@ export default function AdSimulator() {
                     <div className="hiw-steps">
                       <div className="hiw-step">
                         <div className="hiw-step-num">1</div>
-                        <div className="hiw-step-text">Sign in with your Google account. This lets us track your credits, collection, and stats across devices. We promise not to do anything weird with it. Probably.</div>
-                      </div>
-                      <div className="hiw-step">
-                        <div className="hiw-step-num">2</div>
                         <div className="hiw-step-text">Press <strong>RUN AD</strong>. An advertisement plays. You watch it to completion. This is, in its entirety, the core gameplay loop.</div>
                       </div>
                       <div className="hiw-step">
-                        <div className="hiw-step-num">3</div>
+                        <div className="hiw-step-num">2</div>
                         <div className="hiw-step-text">Earn <strong>1 credit</strong> per ad watched. Credits accumulate across sessions and are permanently saved to your account. Credits cannot be spent, redeemed, or exchanged for anything of value. They are a number. The number goes up. This is sufficient.</div>
                       </div>
                       <div className="hiw-step">
-                        <div className="hiw-step-num">4</div>
+                        <div className="hiw-step-num">3</div>
                         <div className="hiw-step-text">Each ad is assigned a <strong>rarity tier</strong>, rolled fresh on every impression. Common ads appear 90% of the time. Mythic ads appear 0.0001% of the time. When you land a rare ad, the screen celebrates. You have won nothing. It will feel like you have won something.</div>
                       </div>
                       <div className="hiw-step">
-                        <div className="hiw-step-num">5</div>
+                        <div className="hiw-step-num">4</div>
                         <div className="hiw-step-text">Every ad you collect is saved to your <strong>Collection</strong> tab. First discoveries trigger a special overlay. Duplicate copies stack with a ×2, ×3 badge. You are, functionally, collecting advertisements. This was someone's idea and they were very pleased with it.</div>
                       </div>
                       <div className="hiw-step">
-                        <div className="hiw-step-num">6</div>
+                        <div className="hiw-step-num">5</div>
                         <div className="hiw-step-text">The <strong>Leaderboard</strong> ranks all users globally by lifetime credits, total ads collected, unique ads found, and rarest tier reached. There is no prize for first place. There is only first place. Several people are competing for it right now.</div>
                       </div>
                     </div>
