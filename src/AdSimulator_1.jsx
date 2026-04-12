@@ -215,6 +215,26 @@ const styles = `
   .preview-footer { padding: 0.75rem 1rem; display: flex; align-items: center; justify-content: space-between; }
   .preview-cta { font-size: 0.78rem; font-weight: 800; padding: 0.35rem 0.9rem; border-radius: 8px; color: #fff; }
 
+  /* ── RARITY ROLL WHEEL ── */
+  .roll-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.97); backdrop-filter: blur(6px); z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.75rem; animation: fadeIn 0.2s ease; }
+  .roll-eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; letter-spacing: 0.25em; text-transform: uppercase; color: #4a4a5e; }
+  .wheel-scene { position: relative; width: 300px; height: 300px; }
+  .wheel-light { position: absolute; width: 10px; height: 10px; border-radius: 50%; transform: translate(-50%, -50%); animation: chaseLights 0.6s linear infinite; }
+  @keyframes chaseLights { 0%, 100% { background: #fff; box-shadow: 0 0 8px #fff, 0 0 16px #fff; } 50% { background: #444; box-shadow: none; } }
+  .wheel-pointer-wrap { position: absolute; top: -22px; left: 50%; transform: translateX(-50%); z-index: 20; }
+  .wheel-ptr { width: 0; height: 0; border-left: 13px solid transparent; border-right: 13px solid transparent; border-top: 26px solid #fff; filter: drop-shadow(0 0 10px rgba(255,255,255,0.9)); }
+  .wheel-frame { position: absolute; inset: 0; border-radius: 50%; border: 5px solid #333; overflow: hidden; box-shadow: 0 0 80px rgba(0,0,0,0.9), inset 0 0 40px rgba(0,0,0,0.6); }
+  .wheel-disc { width: 100%; height: 100%; border-radius: 50%; transform-origin: center center; transition: transform 4s cubic-bezier(0.17, 0.67, 0.08, 1); background: conic-gradient(#888888 0deg 59deg, #1a1a22 59deg 61deg, #4ade80 61deg 119deg, #1a1a22 119deg 121deg, #60a5fa 121deg 179deg, #1a1a22 179deg 181deg, #a855f7 181deg 239deg, #1a1a22 239deg 241deg, #fbbc04 241deg 299deg, #1a1a22 299deg 301deg, #e63c3c 301deg 360deg); }
+  .wheel-vignette { position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle, rgba(0,0,0,0.4) 0%, transparent 65%); pointer-events: none; z-index: 2; }
+  .wheel-hub { position: absolute; inset: 37%; border-radius: 50%; background: #0e0e16; border: 3px solid #333; z-index: 5; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; box-shadow: 0 0 24px rgba(0,0,0,0.9); }
+  .roll-status { text-align: center; min-height: 5rem; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.5rem; }
+  .roll-spinning-text { font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: #4a4a5e; letter-spacing: 0.3em; animation: rollPulse 0.6s ease-in-out infinite; }
+  @keyframes rollPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+  .roll-landed-name { font-family: 'Nunito', sans-serif; font-size: 2.8rem; font-weight: 900; letter-spacing: -0.02em; animation: scaleIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+  .roll-landed-sub { font-family: 'JetBrains Mono', monospace; font-size: 0.62rem; color: #4a4a5e; letter-spacing: 0.2em; margin-top: 0.25rem; }
+  .roll-legend { display: flex; gap: 0.35rem; flex-wrap: wrap; justify-content: center; max-width: 320px; }
+  .roll-legend-pip { font-family: 'JetBrains Mono', monospace; font-size: 0.58rem; font-weight: 700; padding: 0.15rem 0.5rem; border-radius: 999px; border: 1px solid; opacity: 0.7; }
+
   /* ── AD VIDEO ── */
   .ad-video { width: 100%; height: auto; min-height: 180px; display: block; max-height: 65vh; object-fit: contain; background: #000; }
   .video-badge { font-family: 'Nunito', sans-serif; font-size: 0.65rem; font-weight: 700; color: #4ade80; background: #4ade8015; border: 1px solid #4ade8033; padding: 0.15rem 0.5rem; border-radius: 999px; }
@@ -469,6 +489,9 @@ export default function AdSimulator() {
   const [userLibrary, setUserLibrary] = useState([]);
   const [adState, setAdState] = useState("idle");
   const [isMuted, setIsMuted] = useState(false);
+  const [rollTargetRarity, setRollTargetRarity] = useState(null);
+  const [wheelRotation, setWheelRotation] = useState(0);
+  const [rollLanded, setRollLanded] = useState(false);
   const [currentAd, setCurrentAd] = useState(null);
   const [isAdminAd, setIsAdminAd] = useState(false);
   const [showNewCollectOverlay, setShowNewCollectOverlay] = useState(false);
@@ -590,6 +613,32 @@ export default function AdSimulator() {
     return () => unsub();
   }, []);
 
+  // ── Rarity roll animation timing ──
+  useEffect(() => {
+    if (adState !== "rolling" || !rollTargetRarity) return;
+    const rarityIndex = RARITIES.findIndex(r => r.key === rollTargetRarity.key);
+    const segmentCenter = rarityIndex * 60 + 30;
+    const landOffset = Math.random() * 30 - 15;
+    const targetRotation = 5 * 360 + (360 - segmentCenter + landOffset);
+    const spinTimer  = setTimeout(() => setWheelRotation(targetRotation), 80);
+    const landTimer  = setTimeout(() => setRollLanded(true), 4300);
+    const runTimer   = setTimeout(() => {
+      const ad = currentAdRef.current;
+      setCurrentAd(ad);
+      setIsAdminAd(true);
+      setCountdown(ad.videoUrl ? null : 5);
+      adDurationRef.current = 5000;
+      adStartRef.current = ad.videoUrl ? null : Date.now();
+      setAdVideoSize(null);
+      setIsPreview(false);
+      setProgress(0);
+      setAdState("running");
+      setRollLanded(false);
+      setWheelRotation(0);
+    }, 5600);
+    return () => { clearTimeout(spinTimer); clearTimeout(landTimer); clearTimeout(runTimer); };
+  }, [adState, rollTargetRarity]);
+
   // ── Ad timer ──
   useEffect(() => {
     if (adState === "running") {
@@ -629,18 +678,13 @@ export default function AdSimulator() {
     const ad = pool.length > 0
       ? pool[Math.floor(Math.random() * pool.length)]
       : adminAds[Math.floor(Math.random() * adminAds.length)];
-    adDurationRef.current = 5000;
-    adStartRef.current = ad.videoUrl ? null : Date.now();
     currentAdRef.current = ad;
     isAdminAdRef.current = adminFlag;
-    setCurrentAd(ad);
-    setIsAdminAd(adminFlag);
+    setRollTargetRarity(RARITY_MAP[rolledRarity]);
+    setWheelRotation(0);
+    setRollLanded(false);
     setShowNewCollectOverlay(false);
-    setProgress(0);
-    setCountdown(ad.videoUrl ? null : 5);
-    setAdVideoSize(null);
-    setIsPreview(false);
-    setAdState("running");
+    setAdState("rolling");
   };
 
   const awardCredit = () => {
@@ -1223,7 +1267,7 @@ export default function AdSimulator() {
                   <div className="run-btn-wrapper">
                     <div className="run-btn-ring" />
                     <div className="run-btn-ring run-btn-ring-2" />
-                    <button className="run-btn" onClick={runAd} disabled={adState !== "idle" || adminAds.length === 0}>
+                    <button className="run-btn" onClick={runAd} disabled={adState !== "idle" || adminAds.length === 0} style={{ opacity: adState !== "idle" ? 0.6 : 1 }}>
                       <span className="run-btn-text">RUN AD</span>
                       <span className="run-btn-sub">{adminAds.length === 0 ? "no ads available" : "earn 1 credit"}</span>
                     </button>
@@ -1424,6 +1468,61 @@ export default function AdSimulator() {
               />
             ) : null}
           </div>
+          </div>
+        )}
+
+        {/* ── RARITY ROLL WHEEL ── */}
+        {adState === "rolling" && rollTargetRarity && (
+          <div className="roll-backdrop" style={{ background: rollLanded ? `rgba(0,0,0,0.97)` : "rgba(0,0,0,0.97)" }}>
+            <div className="roll-eyebrow">// rolling for rarity</div>
+            <div className="wheel-scene">
+              {/* Chase lights */}
+              {Array.from({ length: 16 }, (_, i) => {
+                const angle = (i / 16) * 2 * Math.PI - Math.PI / 2;
+                const r = 166;
+                return (
+                  <div key={i} className="wheel-light" style={{
+                    left: 150 + r * Math.cos(angle),
+                    top:  150 + r * Math.sin(angle),
+                    animationDelay: `${(i % 4) * 0.15}s`,
+                    background: rollLanded ? rollTargetRarity.color : undefined,
+                    boxShadow: rollLanded ? `0 0 8px ${rollTargetRarity.color}, 0 0 16px ${rollTargetRarity.color}` : undefined,
+                  }} />
+                );
+              })}
+              {/* Pointer */}
+              <div className="wheel-pointer-wrap"><div className="wheel-ptr" /></div>
+              {/* Wheel */}
+              <div className="wheel-frame">
+                <div className="wheel-disc" style={{ transform: `rotate(${wheelRotation}deg)` }} />
+                <div className="wheel-vignette" />
+                <div className="wheel-hub" style={{ borderColor: rollLanded ? rollTargetRarity.color + "88" : "#333", boxShadow: rollLanded ? `0 0 24px ${rollTargetRarity.color}55` : "0 0 24px rgba(0,0,0,0.9)" }}>
+                  {rollLanded ? <span style={{ fontSize: "1.4rem" }}>{["⬡","◈","✦","❋","★","✸"][RARITIES.findIndex(r => r.key === rollTargetRarity.key)]}</span> : "?"}
+                </div>
+              </div>
+            </div>
+            {/* Status */}
+            <div className="roll-status">
+              {rollLanded ? (
+                <>
+                  <RaritySparkles color={rollTargetRarity.color} large />
+                  <div className="roll-landed-name" style={{ color: rollTargetRarity.color, textShadow: `0 0 40px ${rollTargetRarity.color}88` }}>
+                    {rollTargetRarity.label}
+                  </div>
+                  <div className="roll-landed-sub">// rarity confirmed — loading ad</div>
+                </>
+              ) : (
+                <div className="roll-spinning-text">S P I N N I N G . . .</div>
+              )}
+            </div>
+            {/* Legend */}
+            <div className="roll-legend">
+              {RARITIES.map(r => (
+                <span key={r.key} className="roll-legend-pip" style={{ color: r.color, borderColor: r.color + "55", background: r.color + "12", opacity: rollLanded ? (r.key === rollTargetRarity.key ? 1 : 0.3) : 0.7 }}>
+                  {r.label}
+                </span>
+              ))}
+            </div>
           </div>
         )}
 
