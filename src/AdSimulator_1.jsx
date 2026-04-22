@@ -773,7 +773,7 @@ export default function AdSimulator() {
 
     if (isAdmin && ad) {
       const isNew = !lib.some(item => item.id === ad.id);
-      setUserLibrary(prev => [...prev, ad]); // always add — duplicates allowed
+      setUserLibrary(prev => [...prev, { id: ad.id }]); // store ID only; display resolves live from adminAds
       if (isNew) setShowNewCollectOverlay(true);
     }
   };
@@ -1511,13 +1511,15 @@ export default function AdSimulator() {
                   <div className="collection-grid">
                     {(() => {
                       const seen = {};
-                      userLibrary.forEach(ad => { seen[ad.id] = (seen[ad.id] || 0) + 1; });
-                      const unique = userLibrary.filter((ad, i, arr) => arr.findIndex(a => a.id === ad.id) === i);
-                      return unique.map(ad => {
+                      userLibrary.forEach(item => { seen[item.id] = (seen[item.id] || 0) + 1; });
+                      const unique = userLibrary.filter((item, i, arr) => arr.findIndex(a => a.id === item.id) === i);
+                      return unique.map(item => {
+                        const ad = adminAds.find(a => a.id === item.id) || item;
+                        if (!ad.brand) return null; // deleted ad with no stored snapshot
                         const rar = RARITY_MAP[ad.rarity || "common"];
-                        const qty = seen[ad.id] || 1;
+                        const qty = seen[item.id] || 1;
                         return (
-                          <div key={ad.id} className="coll-card" style={{ position: "relative", overflow: "visible", cursor: "pointer", ...getRarityStyle(ad.rarity || "common") }} onClick={() => previewAd(ad, true)}>
+                          <div key={item.id} className="coll-card" style={{ position: "relative", overflow: "visible", cursor: "pointer", ...getRarityStyle(ad.rarity || "common") }} onClick={() => previewAd(ad, true)}>
                             {rar.sparkle && <RaritySparkles color={rar.color} />}
                             {qty > 1 && <div className="qty-badge">×{qty}</div>}
                             <div style={{ borderRadius: "2px", overflow: "hidden", position: "relative", zIndex: 1 }}>
