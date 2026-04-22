@@ -987,10 +987,10 @@ export default function AdSimulator() {
             </header>
 
             <div className="landing-body">
-              <div className="landing-eyebrow">// free to play · no purchase necessary · credits are worthless</div>
-              <h1 className="landing-hero-title">Watch Ads.<br />Earn <span>Credits.</span><br />Collect Everything.</h1>
+              <div className="landing-eyebrow">// credits are worthless · this is not a disclaimer · it is a boast</div>
+              <h1 className="landing-hero-title">Watch Ads.<br />Get <span>Nothing.</span><br />Do It Again.</h1>
               <p className="landing-hero-sub">
-                Ad Simulator turns ad watching into a collection game. Every ad you watch rolls for rarity — from Common to the astronomically rare Mythic. Build your library, climb the leaderboard, and find out what a 0.0001% drop rate feels like.
+                Ad Simulator is a platform where you watch advertisements and receive credits. The credits cannot be spent, redeemed, or exchanged for anything. They are a number. The number goes up. Somehow, this is enough.
               </p>
               <button
                 className="landing-signin-btn"
@@ -1007,23 +1007,23 @@ export default function AdSimulator() {
               <div className="landing-features">
                 <div className="landing-feature">
                   <div className="landing-feature-icon">▶</div>
-                  <h3>Watch an Ad</h3>
-                  <p>Press Run Ad. A rarity roll determines what you get. The wheel spins. The ad plays.</p>
+                  <h3>Press the Button</h3>
+                  <p>There is one button. It says RUN AD. You press it. A wheel spins dramatically. An ad plays. This is the product.</p>
                 </div>
                 <div className="landing-feature">
                   <div className="landing-feature-icon">✦</div>
-                  <h3>Earn Credits</h3>
-                  <p>Every watch earns one credit. Credits are tracked on a global leaderboard. They cannot be spent on anything.</p>
+                  <h3>Receive a Number</h3>
+                  <p>You earn one credit per ad watched. Credits are tracked, displayed, and leaderboarded. They cannot be spent on anything. This is stated upfront because it doesn't matter.</p>
                 </div>
                 <div className="landing-feature">
                   <div className="landing-feature-icon">◈</div>
                   <h3>Build Your Collection</h3>
-                  <p>Every ad you discover is saved to your library. Duplicates stack. Rare finds are flagged. New additions are celebrated appropriately.</p>
+                  <p>Every ad is saved to your personal library. You are, in effect, curating a catalogue of advertisements you watched for free. Multiple users have described this as satisfying.</p>
                 </div>
                 <div className="landing-feature">
                   <div className="landing-feature-icon">★</div>
                   <h3>Chase Rarity</h3>
-                  <p>Six tiers from Common to Mythic. The Mythic drop rate is 0.0001%. People are attempting it regardless. You will too.</p>
+                  <p>Six tiers. Common to Mythic. The Mythic drop rate is 0.0001%. You already know you're going to try for it. The internet prepared you for exactly this moment.</p>
                 </div>
               </div>
 
@@ -1038,8 +1038,8 @@ export default function AdSimulator() {
               </div>
 
               <div className="landing-cta">
-                <h2>Ready to Watch Some Ads?</h2>
-                <p>Free to play. No purchase required. The credits are real but worthless. The Mythic tier exists.</p>
+                <h2>Come Earn Some Credits.</h2>
+                <p>They're free. They're worthless. There's a Mythic tier. You won't be able to help yourself.</p>
                 <button
                   className="landing-signin-btn"
                   onClick={signInWithGoogle}
