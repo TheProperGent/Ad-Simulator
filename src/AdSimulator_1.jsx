@@ -38,7 +38,7 @@ const RARITIES = [
 ];
 const RARITY_MAP = Object.fromEntries(RARITIES.map(r => [r.key, r]));
 
-const BLANK_AD = { brand: "", tagline: "", cta: "", category: "Technology", color: "#e63c3c", logo: "⚡", videoUrl: "", rarity: "common" };
+const BLANK_AD = { brand: "", tagline: "", cta: "", ctaUrl: "", category: "Technology", color: "#e63c3c", logo: "⚡", logoUrl: "", videoUrl: "", rarity: "common" };
 
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Nunito:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
@@ -225,6 +225,12 @@ const styles = `
   .logo-btn { background: #1a1a22; border: 1px solid #22222e; border-radius: 8px; padding: 0.3rem; font-size: 1rem; cursor: pointer; transition: all 0.1s; text-align: center; }
   .logo-btn:hover { border-color: #5a5a72; }
   .logo-btn.sel { border-color: #fbbc04; background: #1e1a10; }
+  .logo-upload-row { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; }
+  .logo-upload-btn { background: #1a1a22; border: 1px solid #22222e; border-radius: 8px; padding: 0.4rem 0.85rem; font-family: 'Nunito', sans-serif; font-size: 0.78rem; font-weight: 700; color: #7e7e96; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+  .logo-upload-btn:hover { border-color: #5a5a72; color: #eee; }
+  .logo-upload-preview { width: 36px; height: 36px; border-radius: 8px; object-fit: cover; border: 1px solid #fbbc04; }
+  .logo-upload-clear { background: none; border: none; color: #5a5a72; font-size: 0.85rem; cursor: pointer; padding: 0 0.25rem; }
+  .logo-upload-clear:hover { color: #e63c3c; }
   .form-error { font-family: 'Nunito', sans-serif; font-size: 0.8rem; font-weight: 600; color: #e63c3c; margin-bottom: 1rem; }
   .form-actions { display: flex; gap: 0.75rem; margin-top: 2rem; flex-wrap: wrap; }
   .btn-create { background: #fbbc04; color: #0e0e14; border: none; border-radius: 10px; padding: 0.85rem 2rem; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.9rem; cursor: pointer; transition: background 0.15s, transform 0.1s; }
@@ -266,7 +272,7 @@ const styles = `
   /* ── AD VIDEO ── */
   .ad-video { width: 100%; height: auto; min-height: 180px; display: block; max-height: 65vh; object-fit: contain; background: #000; }
   .video-badge { font-family: 'Nunito', sans-serif; font-size: 0.65rem; font-weight: 700; color: #4ade80; background: #4ade8015; border: 1px solid #4ade8033; padding: 0.15rem 0.5rem; border-radius: 999px; }
-  .preview-video { width: 100%; max-height: 140px; object-fit: cover; background: #000; display: block; }
+  .preview-video { width: 100%; height: auto; min-height: 120px; max-height: 340px; object-fit: contain; background: #000; display: block; }
 
   /* ── AD MODAL ── */
   .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 100; animation: fadeIn 0.2s ease; padding: 1rem; }
@@ -284,7 +290,9 @@ const styles = `
   .ad-body { padding: 1.25rem 1.5rem 1.5rem; }
   .ad-category { font-family: 'Nunito', sans-serif; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; color: #7e7e96; text-transform: uppercase; margin-bottom: 0.75rem; }
   .ad-cta-row { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.25rem; }
-  .ad-cta { display: inline-block; padding: 0.55rem 1.2rem; border-radius: 8px; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.85rem; color: #fff; }
+  .ad-cta { display: inline-block; padding: 0.55rem 1.2rem; border-radius: 8px; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.85rem; color: #fff; text-decoration: none; cursor: default; }
+  .ad-cta.clickable { cursor: pointer; }
+  .ad-cta.clickable:hover { opacity: 0.85; }
   .new-collect-badge { font-family: 'Nunito', sans-serif; font-size: 0.7rem; font-weight: 700; color: #fbbc04; background: #fbbc0415; border: 1px solid #fbbc0433; padding: 0.2rem 0.6rem; border-radius: 999px; animation: glow 1s ease-in-out infinite; }
   @keyframes glow { 0%, 100% { box-shadow: 0 0 4px #fbbc0444; } 50% { box-shadow: 0 0 12px #fbbc0488; } }
   .ad-progress-wrapper {}
@@ -501,12 +509,14 @@ export default function AdSimulator() {
   const [adminView, setAdminView] = useState("ads");
   const [editingAdId, setEditingAdId] = useState(null);
   const [editingOriginalVideoUrl, setEditingOriginalVideoUrl] = useState(null);
+  const [editingOriginalLogoUrl, setEditingOriginalLogoUrl] = useState(null);
   const [newAd, setNewAd] = useState(BLANK_AD);
   const [formError, setFormError] = useState("");
   const [cleanupState, setCleanupState] = useState("idle"); // "idle" | "running" | "done"
   const [cleanupResult, setCleanupResult] = useState(null);
   const [storageReady, setStorageReady] = useState(false);
   const [videoUploadState, setVideoUploadState] = useState("idle"); // "idle" | "uploading" | "error"
+  const [logoUploadState, setLogoUploadState] = useState("idle"); // "idle" | "uploading" | "error"
   const [adVideoSize, setAdVideoSize] = useState(null); // { w, h } natural video dimensions
   const [isPreview, setIsPreview] = useState(false);
   const [userStats, setUserStats] = useState(BLANK_STATS());
@@ -873,17 +883,19 @@ export default function AdSimulator() {
 
   const startEditAd = (ad) => {
     setEditingAdId(ad.id);
-    setNewAd({ brand: ad.brand, tagline: ad.tagline, cta: ad.cta, category: ad.category, color: ad.color, logo: ad.logo, videoUrl: ad.videoUrl || "", rarity: ad.rarity || "common" });
+    setNewAd({ brand: ad.brand, tagline: ad.tagline, cta: ad.cta, ctaUrl: ad.ctaUrl || "", category: ad.category, color: ad.color, logo: ad.logo, logoUrl: ad.logoUrl || "", videoUrl: ad.videoUrl || "", rarity: ad.rarity || "common" });
     setEditingOriginalVideoUrl(ad.videoUrl || "");
+    setEditingOriginalLogoUrl(ad.logoUrl || "");
     setFormError("");
     setVideoUploadState("idle");
+    setLogoUploadState("idle");
     setAdminView("create");
   };
 
   const cleanupOrphanedVideos = async () => {
     setCleanupState("running");
     setCleanupResult(null);
-    const keepUrls = adminAds.map(a => a.videoUrl).filter(Boolean);
+    const keepUrls = adminAds.flatMap(a => [a.videoUrl, a.logoUrl]).filter(Boolean);
     try {
       const res = await fetch(`${WORKER_URL}/cleanup`, {
         method: "POST",
@@ -913,14 +925,16 @@ export default function AdSimulator() {
 
   const deleteAdminAd = async (id) => {
     const ad = adminAds.find(a => a.id === id);
-    if (ad?.videoUrl?.includes(".r2.dev/")) {
-      try {
-        await fetch(`${WORKER_URL}/delete`, {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url: ad.videoUrl }),
-        });
-      } catch {}
+    for (const url of [ad?.videoUrl, ad?.logoUrl]) {
+      if (url?.includes(".r2.dev/")) {
+        try {
+          await fetch(`${WORKER_URL}/delete`, {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ url }),
+          });
+        } catch {}
+      }
     }
     await deleteDoc(doc(db, "adminAds", id));
     // onSnapshot updates adminAds state automatically
@@ -948,6 +962,31 @@ export default function AdSimulator() {
     } catch (err) {
       setVideoUploadState("error");
       setFormError(`// upload failed: ${err.message}`);
+    }
+  };
+
+  const uploadLogoToR2 = async (file) => {
+    const MAX_BYTES = 5 * 1024 * 1024;
+    if (file.size > MAX_BYTES) {
+      setLogoUploadState("error");
+      setFormError("// logo image must be under 5 MB");
+      return;
+    }
+    setLogoUploadState("uploading");
+    setFormError("");
+    const formData = new FormData();
+    formData.append("file", file);
+    try {
+      const res = await fetch(`${WORKER_URL}/upload`, { method: "POST", body: formData });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Upload failed");
+      // cleanup previous custom logo if switching
+      if (newAd.logoUrl?.includes(".r2.dev/")) cleanupPendingVideo(newAd.logoUrl);
+      setNewAd(p => ({ ...p, logoUrl: data.url }));
+      setLogoUploadState("idle");
+    } catch (err) {
+      setLogoUploadState("error");
+      setFormError(`// logo upload failed: ${err.message}`);
     }
   };
 
@@ -1125,7 +1164,10 @@ export default function AdSimulator() {
                           <div style={{ borderRadius: "2px", overflow: "hidden", position: "relative", zIndex: 1 }}>
                             <div className="adm-banner" style={{ background: ad.color + "18" }}>
                               <BannerBg color={ad.color} opacity={0.22} />
-                              <div className="adm-icon">{ad.logo}</div>
+                              {ad.logoUrl
+                                ? <img src={ad.logoUrl} style={{ width: 32, height: 32, borderRadius: 6, objectFit: "cover", position: "relative", zIndex: 1 }} alt="" />
+                                : <div className="adm-icon">{ad.logo}</div>
+                              }
                               <div className="adm-brand">{ad.brand}</div>
                               <div className="adm-tagline">{ad.tagline}</div>
                             </div>
@@ -1167,7 +1209,10 @@ export default function AdSimulator() {
                     ) : (
                       <div className="preview-banner" style={{ background: newAd.color + "18" }}>
                         <div style={{ position: "absolute", inset: 0, background: `radial-gradient(circle at 50% 50%, ${newAd.color}, transparent 70%)`, opacity: 0.22 }} />
-                        <div className="preview-icon">{newAd.logo}</div>
+                        {newAd.logoUrl
+                          ? <img src={newAd.logoUrl} style={{ width: 40, height: 40, borderRadius: 8, objectFit: "cover", position: "relative", zIndex: 1 }} alt="" />
+                          : <div className="preview-icon">{newAd.logo}</div>
+                        }
                         <div className="preview-brand">{newAd.brand || "Brand Name"}</div>
                         <div className="preview-tagline">{newAd.tagline || "Your tagline here"}</div>
                       </div>
@@ -1186,6 +1231,10 @@ export default function AdSimulator() {
                     <div className="form-group">
                       <label className="form-label">CTA Text</label>
                       <input className="form-input" placeholder="e.g. Get Started" value={newAd.cta} onChange={e => setNewAd(p => ({ ...p, cta: e.target.value }))} />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">CTA Link URL <span style={{ color: "#5a5a72", fontWeight: 400 }}>(optional)</span></label>
+                      <input className="form-input" placeholder="https://example.com" value={newAd.ctaUrl} onChange={e => setNewAd(p => ({ ...p, ctaUrl: e.target.value }))} />
                     </div>
                   </div>
 
@@ -1269,22 +1318,44 @@ export default function AdSimulator() {
 
                   <div className="form-group">
                     <label className="form-label">Logo</label>
-                    <div className="logo-grid">
-                      {PRESET_LOGOS.map(l => (
-                        <button
-                          key={l}
-                          className={`logo-btn ${newAd.logo === l ? "sel" : ""}`}
-                          onClick={() => setNewAd(p => ({ ...p, logo: l }))}
-                        >{l}</button>
-                      ))}
+                    <div className="logo-upload-row">
+                      <label className="logo-upload-btn">
+                        {logoUploadState === "uploading" ? "Uploading…" : "↑ Upload Image"}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          style={{ display: "none" }}
+                          onChange={e => { if (e.target.files[0]) uploadLogoToR2(e.target.files[0]); e.target.value = ""; }}
+                        />
+                      </label>
+                      {newAd.logoUrl && (
+                        <>
+                          <img src={newAd.logoUrl} className="logo-upload-preview" alt="logo preview" />
+                          <button
+                            className="logo-upload-clear"
+                            onClick={() => { if (newAd.logoUrl?.includes(".r2.dev/")) cleanupPendingVideo(newAd.logoUrl); setNewAd(p => ({ ...p, logoUrl: "" })); }}
+                          >✕</button>
+                        </>
+                      )}
                     </div>
+                    {!newAd.logoUrl && (
+                      <div className="logo-grid">
+                        {PRESET_LOGOS.map(l => (
+                          <button
+                            key={l}
+                            className={`logo-btn ${newAd.logo === l ? "sel" : ""}`}
+                            onClick={() => setNewAd(p => ({ ...p, logo: l }))}
+                          >{l}</button>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   {formError && <div className="form-error">{formError}</div>}
 
                   <div className="form-actions">
                     <button className="btn-create" onClick={editingAdId ? saveAdminAdEdit : createAdminAd} disabled={videoUploadState === "uploading"} style={{ opacity: videoUploadState === "uploading" ? 0.5 : 1, cursor: videoUploadState === "uploading" ? "not-allowed" : "pointer" }}>{editingAdId ? "SAVE CHANGES" : "PUBLISH AD"}</button>
-                    <button className="btn-cancel" onClick={() => { if (newAd.videoUrl !== editingOriginalVideoUrl) cleanupPendingVideo(newAd.videoUrl); setEditingAdId(null); setEditingOriginalVideoUrl(null); setAdminView("ads"); setFormError(""); setVideoUploadState("idle"); setNewAd(BLANK_AD); }}>CANCEL</button>
+                    <button className="btn-cancel" onClick={() => { if (newAd.videoUrl !== editingOriginalVideoUrl) cleanupPendingVideo(newAd.videoUrl); if (newAd.logoUrl !== editingOriginalLogoUrl) cleanupPendingVideo(newAd.logoUrl); setEditingAdId(null); setEditingOriginalVideoUrl(null); setEditingOriginalLogoUrl(null); setAdminView("ads"); setFormError(""); setVideoUploadState("idle"); setLogoUploadState("idle"); setNewAd(BLANK_AD); }}>CANCEL</button>
                   </div>
 
                   <div style={{ marginTop: "2rem", paddingTop: "1.5rem", borderTop: "1px solid #1a1a1a" }}>
@@ -1452,7 +1523,10 @@ export default function AdSimulator() {
                             <div style={{ borderRadius: "2px", overflow: "hidden", position: "relative", zIndex: 1 }}>
                               <div className="coll-banner" style={{ background: ad.color + "18" }}>
                                 <div className="coll-banner-bg" style={{ background: `radial-gradient(circle at 50% 50%, ${ad.color}, transparent 70%)`, opacity: 0.22, position: "absolute", inset: 0 }} />
-                                <div className="coll-icon">{ad.logo}</div>
+                                {ad.logoUrl
+                                  ? <img src={ad.logoUrl} style={{ width: 32, height: 32, borderRadius: 6, objectFit: "cover", position: "relative", zIndex: 1 }} alt="" />
+                                  : <div className="coll-icon">{ad.logo}</div>
+                                }
                                 <div className="coll-brand">{ad.brand}</div>
                               </div>
                               <div className="coll-body">
@@ -1528,7 +1602,10 @@ export default function AdSimulator() {
                           const rar = RARITY_MAP[ad.rarity || "common"];
                           return (
                             <div key={adId} className="rarity-stat-item">
-                              <span style={{ fontSize: "1.2rem" }}>{ad.logo}</span>
+                              {ad.logoUrl
+                                ? <img src={ad.logoUrl} style={{ width: 24, height: 24, borderRadius: 4, objectFit: "cover" }} alt="" />
+                                : <span style={{ fontSize: "1.2rem" }}>{ad.logo}</span>
+                              }
                               <span className="rarity-stat-label">{ad.brand}</span>
                               <span className="rarity-badge" style={{ color: rar.color, background: rar.color + "18", border: `1px solid ${rar.color}33` }}>{rar.label}</span>
                               <span className="rarity-stat-count">×{count}</span>
@@ -1648,7 +1725,10 @@ export default function AdSimulator() {
               ) : (
                 <div className="ad-banner" style={{ background: currentAd.color + "18" }}>
                   <div className="ad-banner-bg" style={{ background: `radial-gradient(circle at 50% 50%, ${currentAd.color}, transparent 70%)`, opacity: 0.25, position: "absolute", inset: 0 }} />
-                  <div className="ad-banner-icon">{currentAd.logo}</div>
+                  {currentAd.logoUrl
+                    ? <img src={currentAd.logoUrl} style={{ width: 48, height: 48, borderRadius: 10, objectFit: "cover", position: "relative", zIndex: 1 }} alt="" />
+                    : <div className="ad-banner-icon">{currentAd.logo}</div>
+                  }
                   <div className="ad-banner-brand">{currentAd.brand}</div>
                   <div className="ad-banner-tagline">{currentAd.tagline}</div>
                 </div>
@@ -1656,7 +1736,10 @@ export default function AdSimulator() {
               <div className="ad-body">
                 <div className="ad-category">{currentAd.category}</div>
                 <div className="ad-cta-row">
-                  <div className="ad-cta" style={{ background: currentAd.color }}>{currentAd.cta}</div>
+                  {currentAd.ctaUrl
+                    ? <a href={currentAd.ctaUrl} target="_blank" rel="noopener noreferrer" className="ad-cta clickable" style={{ background: currentAd.color }}>{currentAd.cta}</a>
+                    : <span className="ad-cta" style={{ background: currentAd.color }}>{currentAd.cta}</span>
+                  }
                   {currentAd.videoUrl && (
                     <button className={`mute-btn${isMuted ? "" : " unmuted"}`} onClick={() => setIsMuted(p => !p)} title={isMuted ? "Unmute" : "Mute"}>
                       {isMuted ? "🔇" : "🔊"}
