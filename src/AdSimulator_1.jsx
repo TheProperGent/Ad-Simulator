@@ -1366,7 +1366,7 @@ export default function AdSimulator() {
                         disabled={cleanupState === "running" || !adminAdsLoaded}
                         style={{ opacity: (cleanupState === "running" || !adminAdsLoaded) ? 0.5 : 1, cursor: (cleanupState === "running" || !adminAdsLoaded) ? "not-allowed" : "pointer", whiteSpace: "nowrap" }}
                       >
-                        {cleanupState === "running" ? "SCANNING…" : "🗑 PURGE ORPHANED VIDEOS"}
+                        {cleanupState === "running" ? "SCANNING…" : "🗑 PURGE ORPHANED FILES"}
                       </button>
                       {cleanupResult !== null && (
                         <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "0.65rem", color: typeof cleanupResult === "number" ? (cleanupResult > 0 ? "#4ade80" : "#555") : "#e63c3c" }}>
