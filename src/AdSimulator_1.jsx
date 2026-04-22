@@ -54,6 +54,34 @@ const styles = `
   .auth-logo { font-family: 'Nunito', sans-serif; font-size: 0.8rem; font-weight: 800; letter-spacing: 0.08em; color: #e63c3c; text-transform: uppercase; margin-bottom: 1.5rem; }
   .auth-title { font-size: 1.9rem; font-weight: 800; letter-spacing: -0.03em; line-height: 1.15; margin-bottom: 0.4rem; }
   .auth-sub { font-family: 'Nunito', sans-serif; font-size: 0.85rem; color: #7e7e96; margin-bottom: 1.75rem; }
+
+  /* ── LANDING ── */
+  .landing { min-height: 100vh; display: flex; flex-direction: column; position: relative; z-index: 1; }
+  .landing-header { display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 2rem; border-bottom: 1px solid #1a1a22; }
+  .landing-logo { font-family: 'Nunito', sans-serif; font-size: 1rem; font-weight: 800; letter-spacing: 0.05em; color: #e63c3c; }
+  .landing-body { flex: 1; max-width: 780px; margin: 0 auto; padding: 4rem 2rem 5rem; width: 100%; }
+  .landing-eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; color: #e63c3c; letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 1rem; }
+  .landing-hero-title { font-size: clamp(2.4rem, 6vw, 3.8rem); font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; margin-bottom: 1.25rem; }
+  .landing-hero-title span { color: #e63c3c; }
+  .landing-hero-sub { font-family: 'Nunito', sans-serif; font-size: 1.05rem; color: #7e7e96; max-width: 520px; line-height: 1.7; margin-bottom: 2.5rem; }
+  .landing-signin-btn { display: inline-flex; align-items: center; gap: 0.75rem; background: #fff; color: #111; border: none; border-radius: 12px; padding: 0.9rem 1.5rem; font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: background 0.15s, transform 0.1s; }
+  .landing-signin-btn:hover { background: #f0f0f0; transform: translateY(-1px); }
+  .landing-signin-btn:disabled { opacity: 0.5; cursor: default; transform: none; }
+  .landing-divider { border: none; border-top: 1px solid #1a1a22; margin: 3.5rem 0; }
+  .landing-section-label { font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: #5a5a72; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 1.5rem; }
+  .landing-features { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 3rem; }
+  .landing-feature { background: #13131a; border: 1px solid #1e1e2c; border-radius: 14px; padding: 1.25rem 1.5rem; }
+  .landing-feature-icon { font-size: 1.4rem; margin-bottom: 0.75rem; }
+  .landing-feature h3 { font-family: 'Nunito', sans-serif; font-size: 0.95rem; font-weight: 800; color: #fff; margin-bottom: 0.4rem; }
+  .landing-feature p { font-family: 'Nunito', sans-serif; font-size: 0.82rem; color: #7e7e96; line-height: 1.6; }
+  .landing-rarity-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 0.6rem; margin-bottom: 3rem; }
+  .landing-rarity-card { background: #13131a; border: 1px solid #1e1e2c; border-radius: 10px; padding: 0.75rem 1rem; display: flex; align-items: center; justify-content: space-between; }
+  .landing-rarity-name { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.88rem; }
+  .landing-rarity-chance { font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; color: #5a5a72; }
+  .landing-cta { background: #13131a; border: 1px solid #1e1e2c; border-radius: 16px; padding: 2.5rem; text-align: center; }
+  .landing-cta h2 { font-size: 1.6rem; font-weight: 800; margin-bottom: 0.5rem; }
+  .landing-cta p { font-family: 'Nunito', sans-serif; color: #7e7e96; font-size: 0.9rem; margin-bottom: 1.75rem; }
+  @media (max-width: 600px) { .landing-body { padding: 2.5rem 1.25rem 4rem; } .landing-header { padding: 1rem 1.25rem; } }
   .btn-google { display: flex; align-items: center; justify-content: center; gap: 0.75rem; width: 100%; background: #fff; color: #111; border: none; border-radius: 12px; padding: 0.9rem 1rem; font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: background 0.15s, transform 0.1s; margin-bottom: 1.5rem; }
   .btn-google:hover { background: #f0f0f0; transform: translateY(-1px); }
   .btn-google:active { transform: translateY(0); }
@@ -950,23 +978,77 @@ export default function AdSimulator() {
       <div className="app">
         <div className="noise" />
 
-        {/* ── AUTH ── */}
+        {/* ── LANDING / AUTH ── */}
         {!currentUser ? (
-          <div className="auth-screen">
-            <div className="auth-card">
-              <div className="auth-logo">◉ Ad Simulator</div>
-              <h1 className="auth-title">Sign In to<br />Your Profile</h1>
-              <p className="auth-sub">// continue with google</p>
+          <div className="landing">
+            <header className="landing-header">
+              <div className="landing-logo">◉ Ad Simulator</div>
+              <a href="/about.html" style={{ fontFamily: "'Nunito', sans-serif", fontSize: "0.8rem", fontWeight: 700, color: "#7e7e96", border: "1px solid #2a2a38", borderRadius: 999, padding: "0.35rem 1rem", textDecoration: "none" }}>About →</a>
+            </header>
 
-              {firebaseUser === undefined ? (
-                <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "0.72rem", color: "#444", marginBottom: "1.5rem" }}>loading…</p>
-              ) : (
-                <button className="btn-google" onClick={signInWithGoogle}>
+            <div className="landing-body">
+              <div className="landing-eyebrow">// free to play · no purchase necessary · credits are worthless</div>
+              <h1 className="landing-hero-title">Watch Ads.<br />Earn <span>Credits.</span><br />Collect Everything.</h1>
+              <p className="landing-hero-sub">
+                Ad Simulator turns ad watching into a collection game. Every ad you watch rolls for rarity — from Common to the astronomically rare Mythic. Build your library, climb the leaderboard, and find out what a 0.0001% drop rate feels like.
+              </p>
+              <button
+                className="landing-signin-btn"
+                onClick={signInWithGoogle}
+                disabled={firebaseUser === undefined}
+              >
+                <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z"/></svg>
+                {firebaseUser === undefined ? "Loading…" : "Sign In with Google"}
+              </button>
+
+              <hr className="landing-divider" />
+
+              <div className="landing-section-label">// how it works</div>
+              <div className="landing-features">
+                <div className="landing-feature">
+                  <div className="landing-feature-icon">▶</div>
+                  <h3>Watch an Ad</h3>
+                  <p>Press Run Ad. A rarity roll determines what you get. The wheel spins. The ad plays.</p>
+                </div>
+                <div className="landing-feature">
+                  <div className="landing-feature-icon">✦</div>
+                  <h3>Earn Credits</h3>
+                  <p>Every watch earns one credit. Credits are tracked on a global leaderboard. They cannot be spent on anything.</p>
+                </div>
+                <div className="landing-feature">
+                  <div className="landing-feature-icon">◈</div>
+                  <h3>Build Your Collection</h3>
+                  <p>Every ad you discover is saved to your library. Duplicates stack. Rare finds are flagged. New additions are celebrated appropriately.</p>
+                </div>
+                <div className="landing-feature">
+                  <div className="landing-feature-icon">★</div>
+                  <h3>Chase Rarity</h3>
+                  <p>Six tiers from Common to Mythic. The Mythic drop rate is 0.0001%. People are attempting it regardless. You will too.</p>
+                </div>
+              </div>
+
+              <div className="landing-section-label">// rarity tiers</div>
+              <div className="landing-rarity-grid">
+                {RARITIES.map(r => (
+                  <div className="landing-rarity-card" key={r.key}>
+                    <span className="landing-rarity-name" style={{ color: r.color }}>{r.label}</span>
+                    <span className="landing-rarity-chance">{r.chance}%</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="landing-cta">
+                <h2>Ready to Watch Some Ads?</h2>
+                <p>Free to play. No purchase required. The credits are real but worthless. The Mythic tier exists.</p>
+                <button
+                  className="landing-signin-btn"
+                  onClick={signInWithGoogle}
+                  disabled={firebaseUser === undefined}
+                >
                   <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z"/></svg>
-                  Continue with Google
+                  {firebaseUser === undefined ? "Loading…" : "Get Started — It's Free"}
                 </button>
-              )}
-
+              </div>
             </div>
           </div>
 
