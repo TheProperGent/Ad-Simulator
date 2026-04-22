@@ -278,13 +278,6 @@ const styles = `
   .btn-primary { background: linear-gradient(135deg, #e63c3c, #c0392b); color: #fff; border: none; border-radius: 12px; padding: 0.9rem 2rem; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.9rem; letter-spacing: 0.04em; cursor: pointer; transition: opacity 0.15s, transform 0.1s; width: 100%; }
   .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
 
-  /* ── SIDEBAR ── */
-  .page-with-sidebar { display: flex; min-height: 100vh; }
-  .ad-sidebar { order: 2; width: 180px; flex-shrink: 0; background: #0e0e14; border-left: 1px solid #1a1a24; display: flex; flex-direction: column; align-items: center; padding: 5rem 0.75rem 1rem; gap: 1rem; position: sticky; top: 0; height: 100vh; overflow: hidden; }
-  .ad-sidebar-label { font-family: 'Nunito', sans-serif; font-size: 0.62rem; font-weight: 700; color: #4a4a5e; letter-spacing: 0.1em; text-transform: uppercase; }
-  .main { order: 1; flex: 1; min-width: 0; min-height: 100vh; display: flex; flex-direction: column; }
-  @media (max-width: 900px) { .ad-sidebar { display: none; } }
-
   /* ── RARITY ── */
   @keyframes glow-uncommon  { 0%,100% { box-shadow: 0 0 4px #4ade8033, 0 0 8px #4ade8022;  border-color: #4ade8044; } 50% { box-shadow: 0 0 8px #4ade8055,  0 0 16px #4ade8033;  border-color: #4ade8077; } }
   @keyframes glow-rare      { 0%,100% { box-shadow: 0 0 4px #60a5fa33, 0 0 8px #60a5fa22;  border-color: #60a5fa44; } 50% { box-shadow: 0 0 8px #60a5fa55,  0 0 16px #60a5fa33;  border-color: #60a5fa77; } }
@@ -384,29 +377,6 @@ function getRarityStyle(rarity) {
   const r = RARITY_MAP[rarity] || RARITY_MAP.common;
   if (!r.animation) return {};
   return { animation: `${r.animation} ${r.speed}s ease-in-out infinite` };
-}
-
-const ADSENSE_CLIENT = "ca-pub-3769557613296773";
-const ADSENSE_SLOT   = "8872751959";
-
-function AdSenseUnit() {
-  const ref = useRef(null);
-  useEffect(() => {
-    if (ref.current) {
-      try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch {}
-    }
-  }, []);
-  return (
-    <ins
-      ref={ref}
-      className="adsbygoogle"
-      style={{ display: "block" }}
-      data-ad-client={ADSENSE_CLIENT}
-      data-ad-slot={ADSENSE_SLOT}
-      data-ad-format="auto"
-      data-full-width-responsive="true"
-    />
-  );
 }
 
 const LB_CATEGORIES = [
@@ -526,16 +496,6 @@ export default function AdSimulator() {
   useEffect(() => { currentUserRef.current = currentUser; }, [currentUser]);
   useEffect(() => { userLibraryRef.current = userLibrary; }, [userLibrary]);
 
-  // ── Load AdSense script ──
-  useEffect(() => {
-    if (document.querySelector('script[src*="adsbygoogle"]')) return;
-    const s = document.createElement("script");
-    s.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`;
-    s.async = true;
-    s.crossOrigin = "anonymous";
-    document.head.appendChild(s);
-  }, []);
-
   // ── Firebase auth listener ──
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (fbUser) => {
@@ -613,16 +573,65 @@ export default function AdSimulator() {
     return () => unsub();
   }, []);
 
-  // ── Rarity roll animation timing ──
+  // ── Rarity roll animation timing + tick sounds ──
   useEffect(() => {
     if (adState !== "rolling" || !rollTargetRarity) return;
     const rarityIndex = RARITIES.findIndex(r => r.key === rollTargetRarity.key);
     const segmentCenter = rarityIndex * 60 + 30;
     const landOffset = Math.random() * 30 - 15;
     const targetRotation = 5 * 360 + (360 - segmentCenter + landOffset);
-    const spinTimer  = setTimeout(() => setWheelRotation(targetRotation), 80);
-    const landTimer  = setTimeout(() => setRollLanded(true), 4300);
-    const runTimer   = setTimeout(() => {
+    const SPIN_DURATION = 4000;
+    const SPIN_DELAY = 80;
+
+    // Solve cubic-bezier(0.17, 0.67, 0.08, 1) to map rotation progress → real time.
+    // This is the same easing curve on .wheel-disc so ticks line up with the visual.
+    const bY = t => 3*(1-t)*(1-t)*t*0.67 + 3*(1-t)*t*t*1 + t*t*t;
+    const bX = t => 3*(1-t)*(1-t)*t*0.17 + 3*(1-t)*t*t*0.08 + t*t*t;
+    const solveT = p => {
+      let lo = 0, hi = 1;
+      for (let i = 0; i < 26; i++) { const m = (lo+hi)/2; bY(m) < p ? lo = m : hi = m; }
+      return (lo+hi)/2;
+    };
+
+    // Web Audio tick — noise burst through a bandpass filter
+    let audioCtx;
+    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch {}
+    const playTick = (volume, pitch) => {
+      if (!audioCtx) return;
+      try {
+        const buf = audioCtx.createBuffer(1, Math.floor(audioCtx.sampleRate * 0.04), audioCtx.sampleRate);
+        const d = buf.getChannelData(0);
+        for (let i = 0; i < d.length; i++)
+          d[i] = (Math.random()*2-1) * Math.exp(-i / (audioCtx.sampleRate * 0.004));
+        const src = audioCtx.createBufferSource();
+        src.buffer = buf;
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = "bandpass";
+        filter.frequency.value = pitch;
+        filter.Q.value = 3;
+        const gain = audioCtx.createGain();
+        gain.gain.value = volume;
+        src.connect(filter); filter.connect(gain); gain.connect(audioCtx.destination);
+        src.start();
+      } catch {}
+    };
+
+    // Schedule one tick per 60° zone crossing
+    const timers = [];
+    const numTicks = Math.floor(targetRotation / 60);
+    for (let i = 1; i <= numTicks; i++) {
+      const progress = Math.min((i * 60) / targetRotation, 0.9999);
+      const t = solveT(progress);
+      const tickTime = bX(t) * SPIN_DURATION + SPIN_DELAY;
+      const speed = 1 - progress;           // 1 = fast, 0 = slow
+      const pitch = 250 + speed * 900;      // high pitch fast, low pitch slow
+      const volume = 0.12 + 0.45 * (1 - speed); // quiet fast, loud slow
+      timers.push(setTimeout(() => playTick(volume, pitch), tickTime));
+    }
+
+    timers.push(setTimeout(() => setWheelRotation(targetRotation), SPIN_DELAY));
+    timers.push(setTimeout(() => setRollLanded(true), 4300));
+    timers.push(setTimeout(() => {
       const ad = currentAdRef.current;
       setCurrentAd(ad);
       setIsAdminAd(true);
@@ -635,8 +644,12 @@ export default function AdSimulator() {
       setAdState("running");
       setRollLanded(false);
       setWheelRotation(0);
-    }, 5600);
-    return () => { clearTimeout(spinTimer); clearTimeout(landTimer); clearTimeout(runTimer); };
+    }, 5600));
+
+    return () => {
+      timers.forEach(clearTimeout);
+      try { audioCtx?.close(); } catch {}
+    };
   }, [adState, rollTargetRarity]);
 
   // ── Ad timer ──
@@ -1218,11 +1231,6 @@ export default function AdSimulator() {
 
         ) : (
           /* ── USER MAIN ── */
-          <div className="page-with-sidebar">
-          <aside className="ad-sidebar">
-            <span className="ad-sidebar-label">sponsored</span>
-            <AdSenseUnit />
-          </aside>
           <div className="main">
             <header className="header">
               <a href="/about.html" className="header-logo" style={{ textDecoration: "none" }}>◉ Ad Simulator</a>
@@ -1281,10 +1289,6 @@ export default function AdSimulator() {
                   </div>
 
                   <div className="how-it-works">
-                    <div className="hiw-disclaimer">
-                      // the following section exists to satisfy an ad network's content requirements.<br/>
-                      // we are aware of the irony. <a href="/about.html" target="_blank">there's more where this came from.</a>
-                    </div>
                     <div className="hiw-title">How It Works</div>
                     <div className="hiw-steps">
                       <div className="hiw-step">
@@ -1467,7 +1471,6 @@ export default function AdSimulator() {
                 currentUserId={currentUser.id}
               />
             ) : null}
-          </div>
           </div>
         )}
 
