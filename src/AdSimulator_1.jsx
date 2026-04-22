@@ -572,7 +572,7 @@ export default function AdSimulator() {
     setUserLibrary(lib ? JSON.parse(lib) : []);
     const st = localStorage.getItem(`sim_stats_${currentUser.id}`);
     setUserStats(st ? { ...BLANK_STATS(), ...JSON.parse(st) } : BLANK_STATS());
-  }, [currentUser?.id]);
+  }, [currentUser?.id, currentUser?.isAdmin]);
 
   // ── Persist user library ──
   useEffect(() => {
