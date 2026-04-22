@@ -231,6 +231,12 @@ const styles = `
   .logo-upload-preview { width: 36px; height: 36px; border-radius: 8px; object-fit: cover; border: 1px solid #fbbc04; }
   .logo-upload-clear { background: none; border: none; color: #5a5a72; font-size: 0.85rem; cursor: pointer; padding: 0 0.25rem; }
   .logo-upload-clear:hover { color: #e63c3c; }
+  .logo-prev-section { margin-top: 0.75rem; }
+  .logo-prev-label { font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; color: #5a5a72; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.5rem; }
+  .logo-prev-grid { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+  .logo-prev-thumb { width: 36px; height: 36px; border-radius: 8px; object-fit: cover; cursor: pointer; border: 2px solid transparent; transition: all 0.12s; }
+  .logo-prev-thumb:hover { border-color: #5a5a72; }
+  .logo-prev-thumb.sel { border-color: #fbbc04; }
   .form-error { font-family: 'Nunito', sans-serif; font-size: 0.8rem; font-weight: 600; color: #e63c3c; margin-bottom: 1rem; }
   .form-actions { display: flex; gap: 0.75rem; margin-top: 2rem; flex-wrap: wrap; }
   .btn-create { background: #fbbc04; color: #0e0e14; border: none; border-radius: 10px; padding: 0.85rem 2rem; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.9rem; cursor: pointer; transition: background 0.15s, transform 0.1s; }
@@ -1339,15 +1345,37 @@ export default function AdSimulator() {
                       )}
                     </div>
                     {!newAd.logoUrl && (
-                      <div className="logo-grid">
-                        {PRESET_LOGOS.map(l => (
-                          <button
-                            key={l}
-                            className={`logo-btn ${newAd.logo === l ? "sel" : ""}`}
-                            onClick={() => setNewAd(p => ({ ...p, logo: l }))}
-                          >{l}</button>
-                        ))}
-                      </div>
+                      <>
+                        <div className="logo-grid">
+                          {PRESET_LOGOS.map(l => (
+                            <button
+                              key={l}
+                              className={`logo-btn ${newAd.logo === l ? "sel" : ""}`}
+                              onClick={() => setNewAd(p => ({ ...p, logo: l }))}
+                            >{l}</button>
+                          ))}
+                        </div>
+                        {(() => {
+                          const prevLogos = [...new Set(adminAds.map(a => a.logoUrl).filter(Boolean))];
+                          if (prevLogos.length === 0) return null;
+                          return (
+                            <div className="logo-prev-section">
+                              <div className="logo-prev-label">// previously uploaded</div>
+                              <div className="logo-prev-grid">
+                                {prevLogos.map(url => (
+                                  <img
+                                    key={url}
+                                    src={url}
+                                    className="logo-prev-thumb"
+                                    alt=""
+                                    onClick={() => setNewAd(p => ({ ...p, logoUrl: url }))}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })()}
+                      </>
                     )}
                   </div>
 
