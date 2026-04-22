@@ -59,18 +59,18 @@ const styles = `
   .landing { min-height: 100vh; display: flex; flex-direction: column; position: relative; z-index: 1; }
   .landing-header { display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 2rem; border-bottom: 1px solid #1a1a22; }
   .landing-logo { font-family: 'Nunito', sans-serif; font-size: 1rem; font-weight: 800; letter-spacing: 0.05em; color: #e63c3c; }
-  .landing-body { flex: 1; max-width: 780px; margin: 0 auto; padding: 4rem 2rem 5rem; width: 100%; }
+  .landing-body { flex: 1; max-width: 780px; margin: 0 auto; padding: 4rem 2rem 5rem; width: 100%; text-align: center; }
   .landing-eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; color: #e63c3c; letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 1rem; }
   .landing-hero-title { font-size: clamp(2.4rem, 6vw, 3.8rem); font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; margin-bottom: 1.25rem; }
   .landing-hero-title span { color: #e63c3c; }
-  .landing-hero-sub { font-family: 'Nunito', sans-serif; font-size: 1.05rem; color: #7e7e96; max-width: 520px; line-height: 1.7; margin-bottom: 2.5rem; }
+  .landing-hero-sub { font-family: 'Nunito', sans-serif; font-size: 1.05rem; color: #7e7e96; max-width: 520px; line-height: 1.7; margin-bottom: 2.5rem; margin-left: auto; margin-right: auto; }
   .landing-signin-btn { display: inline-flex; align-items: center; gap: 0.75rem; background: #fff; color: #111; border: none; border-radius: 12px; padding: 0.9rem 1.5rem; font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: background 0.15s, transform 0.1s; }
   .landing-signin-btn:hover { background: #f0f0f0; transform: translateY(-1px); }
   .landing-signin-btn:disabled { opacity: 0.5; cursor: default; transform: none; }
   .landing-divider { border: none; border-top: 1px solid #1a1a22; margin: 3.5rem 0; }
-  .landing-section-label { font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: #5a5a72; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 1.5rem; }
-  .landing-features { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 3rem; }
-  .landing-feature { background: #13131a; border: 1px solid #1e1e2c; border-radius: 14px; padding: 1.25rem 1.5rem; }
+  .landing-section-label { font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: #5a5a72; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 1.5rem; text-align: left; }
+  .landing-features { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 3rem; }
+  .landing-feature { background: #13131a; border: 1px solid #1e1e2c; border-radius: 14px; padding: 1.25rem 1.5rem; text-align: left; }
   .landing-feature-icon { font-size: 1.4rem; margin-bottom: 0.75rem; }
   .landing-feature h3 { font-family: 'Nunito', sans-serif; font-size: 0.95rem; font-weight: 800; color: #fff; margin-bottom: 0.4rem; }
   .landing-feature p { font-family: 'Nunito', sans-serif; font-size: 0.82rem; color: #7e7e96; line-height: 1.6; }
@@ -81,7 +81,7 @@ const styles = `
   .landing-cta { background: #13131a; border: 1px solid #1e1e2c; border-radius: 16px; padding: 2.5rem; text-align: center; }
   .landing-cta h2 { font-size: 1.6rem; font-weight: 800; margin-bottom: 0.5rem; }
   .landing-cta p { font-family: 'Nunito', sans-serif; color: #7e7e96; font-size: 0.9rem; margin-bottom: 1.75rem; }
-  @media (max-width: 600px) { .landing-body { padding: 2.5rem 1.25rem 4rem; } .landing-header { padding: 1rem 1.25rem; } }
+  @media (max-width: 600px) { .landing-body { padding: 2.5rem 1.25rem 4rem; } .landing-header { padding: 1rem 1.25rem; } .landing-features { grid-template-columns: 1fr; } }
   .btn-google { display: flex; align-items: center; justify-content: center; gap: 0.75rem; width: 100%; background: #fff; color: #111; border: none; border-radius: 12px; padding: 0.9rem 1rem; font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: background 0.15s, transform 0.1s; margin-bottom: 1.5rem; }
   .btn-google:hover { background: #f0f0f0; transform: translateY(-1px); }
   .btn-google:active { transform: translateY(0); }
