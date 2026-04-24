@@ -38,7 +38,7 @@ const RARITIES = [
 ];
 const RARITY_MAP = Object.fromEntries(RARITIES.map(r => [r.key, r]));
 
-const BLANK_AD = { brand: "", tagline: "", cta: "", ctaUrl: "", category: "Technology", color: "#e63c3c", logo: "⚡", logoUrl: "", videoUrl: "", rarity: "common" };
+const BLANK_AD = { brand: "", tagline: "", cta: "", ctaUrl: "", category: "Technology", color: "#e63c3c", logo: "⚡", logoUrl: "", videoUrl: "" };
 
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Nunito:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
@@ -538,6 +538,7 @@ export default function AdSimulator() {
   const adDurationRef = useRef(5000);
   const adStartRef = useRef(null);
   const adVideoRef = useRef(null);
+  const rolledRarityRef = useRef("common");
 
   useEffect(() => { currentUserRef.current = currentUser; }, [currentUser]);
   useEffect(() => { userLibraryRef.current = userLibrary; }, [userLibrary]);
@@ -737,13 +738,11 @@ export default function AdSimulator() {
       cumulative += r.chance;
       if (roll < cumulative) { rolledRarity = r.key; break; }
     }
-    const pool = adminAds.filter(a => (a.rarity || "common") === rolledRarity);
-    const ad = pool.length > 0
-      ? pool[Math.floor(Math.random() * pool.length)]
-      : adminAds[Math.floor(Math.random() * adminAds.length)];
+    const ad = adminAds[Math.floor(Math.random() * adminAds.length)];
     currentAdRef.current = ad;
     isAdminAdRef.current = adminFlag;
     setRollTargetRarity(RARITY_MAP[rolledRarity]);
+    rolledRarityRef.current = rolledRarity;
     setWheelRotation(0);
     setRollLanded(false);
     setShowNewCollectOverlay(false);
@@ -771,7 +770,7 @@ export default function AdSimulator() {
 
     // update stats
     setUserStats(prev => {
-      const rarity = (isAdmin && ad?.rarity) ? ad.rarity : null;
+      const rarity = isAdmin ? rolledRarityRef.current : null;
       return {
         lifetimeCredits: prev.lifetimeCredits + 1,
         rarityCount: rarity
@@ -785,7 +784,7 @@ export default function AdSimulator() {
 
     if (isAdmin && ad) {
       const isNew = !lib.some(item => item.id === ad.id);
-      setUserLibrary(prev => [...prev, { id: ad.id }]); // store ID only; display resolves live from adminAds
+      setUserLibrary(prev => [...prev, { id: ad.id, rarity: rolledRarityRef.current }]);
       if (isNew) setShowNewCollectOverlay(true);
     }
   };
@@ -895,7 +894,7 @@ export default function AdSimulator() {
 
   const startEditAd = (ad) => {
     setEditingAdId(ad.id);
-    setNewAd({ brand: ad.brand, tagline: ad.tagline, cta: ad.cta, ctaUrl: ad.ctaUrl || "", category: ad.category, color: ad.color, logo: ad.logo, logoUrl: ad.logoUrl || "", videoUrl: ad.videoUrl || "", rarity: ad.rarity || "common" });
+    setNewAd({ brand: ad.brand, tagline: ad.tagline, cta: ad.cta, ctaUrl: ad.ctaUrl || "", category: ad.category, color: ad.color, logo: ad.logo, logoUrl: ad.logoUrl || "", videoUrl: ad.videoUrl || "" });
     setEditingOriginalVideoUrl(ad.videoUrl || "");
     setEditingOriginalLogoUrl(ad.logoUrl || "");
     setFormError("");
@@ -1169,10 +1168,8 @@ export default function AdSimulator() {
                     </div>
                     <div className="admin-ads-grid">
                       {adminAds.map(ad => {
-                        const rar = RARITY_MAP[ad.rarity || "common"];
                         return (
-                        <div key={ad.id} className="admin-ad-card" style={{ position: "relative", overflow: "visible", cursor: "pointer", ...getRarityStyle(ad.rarity || "common") }} onClick={() => previewAd(ad, true)}>
-                          {rar.sparkle && <RaritySparkles color={rar.color} />}
+                        <div key={ad.id} className="admin-ad-card" style={{ position: "relative", overflow: "visible", cursor: "pointer" }} onClick={() => previewAd(ad, true)}>
                           <div style={{ borderRadius: "2px", overflow: "hidden", position: "relative", zIndex: 1 }}>
                             <div className="adm-banner" style={{ background: ad.color + "18" }}>
                               <BannerBg color={ad.color} opacity={0.22} />
@@ -1185,7 +1182,6 @@ export default function AdSimulator() {
                             </div>
                             <div className="adm-footer">
                               <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-                                <span className="rarity-badge" style={{ color: rar.color, background: rar.color + "18", border: `1px solid ${rar.color}33` }}>{rar.label}</span>
                                 <span className="adm-cat">{ad.category}</span>
                               </div>
                               <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
@@ -1292,25 +1288,6 @@ export default function AdSimulator() {
                       <select className="form-select" value={newAd.category} onChange={e => setNewAd(p => ({ ...p, category: e.target.value }))}>
                         {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                       </select>
-                    </div>
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label">Rarity</label>
-                    <div className="rarity-selector">
-                      {RARITIES.map(r => (
-                        <button
-                          key={r.key}
-                          className={`rarity-btn ${newAd.rarity === r.key ? "sel" : ""}`}
-                          style={newAd.rarity === r.key ? { borderColor: r.color, color: r.color, background: r.color + "18" } : {}}
-                          onClick={() => setNewAd(p => ({ ...p, rarity: r.key }))}
-                        >
-                          {r.label}
-                          <span style={{ marginLeft: "0.35rem", fontFamily: "monospace", fontSize: "0.55rem", color: newAd.rarity === r.key ? r.color + "aa" : "#333" }}>
-                            {r.chance}%
-                          </span>
-                        </button>
-                      ))}
                     </div>
                   </div>
 
@@ -1488,7 +1465,7 @@ export default function AdSimulator() {
                       </div>
                       <div className="hiw-step">
                         <div className="hiw-step-num">3</div>
-                        <div className="hiw-step-text">Each ad is assigned a <strong>rarity tier</strong>, rolled fresh on every impression. Common ads appear 90% of the time. Mythic ads appear 0.0001% of the time. When you land a rare ad, the screen celebrates. You have won nothing. It will feel like you have won something.</div>
+                        <div className="hiw-step-text">Every impression rolls a fresh <strong>rarity tier</strong>. Any ad can land at any rarity — the same ad could be Common one run and Mythic the next. Common rolls occur 90% of the time. Mythic rolls occur 0.0001% of the time. When you land a rare one, the screen celebrates. You have won nothing. It will feel like you have won something.</div>
                       </div>
                       <div className="hiw-step">
                         <div className="hiw-step-num">4</div>
@@ -1550,10 +1527,11 @@ export default function AdSimulator() {
                       return unique.map(item => {
                         const ad = adminAds.find(a => a.id === item.id) || item;
                         if (!ad.brand) return null; // deleted ad with no stored snapshot
-                        const rar = RARITY_MAP[ad.rarity || "common"];
+                        const bestRarityIdx = userLibrary.filter(i => i.id === item.id).reduce((best, i) => Math.max(best, RARITIES.findIndex(r => r.key === (i.rarity || "common"))), 0);
+                        const rar = RARITY_MAP[RARITIES[bestRarityIdx].key];
                         const qty = seen[item.id] || 1;
                         return (
-                          <div key={item.id} className="coll-card" style={{ position: "relative", overflow: "visible", cursor: ad.videoUrl ? "pointer" : "default", ...getRarityStyle(ad.rarity || "common") }} onClick={ad.videoUrl ? () => setExpandedCollId(expandedCollId === item.id ? null : item.id) : undefined}>
+                          <div key={item.id} className="coll-card" style={{ position: "relative", overflow: "visible", cursor: ad.videoUrl ? "pointer" : "default", ...getRarityStyle(RARITIES[bestRarityIdx].key) }} onClick={ad.videoUrl ? () => setExpandedCollId(expandedCollId === item.id ? null : item.id) : undefined}>
                             {rar.sparkle && <RaritySparkles color={rar.color} />}
                             {qty > 1 && <div className="qty-badge">×{qty}</div>}
                             <div style={{ borderRadius: "2px", overflow: "hidden", position: "relative", zIndex: 1 }}>
@@ -1644,7 +1622,8 @@ export default function AdSimulator() {
                         .map(([adId, count]) => {
                           const ad = adminAds.find(a => a.id === adId) || userLibrary.find(a => a.id === adId);
                           if (!ad) return null;
-                          const rar = RARITY_MAP[ad.rarity || "common"];
+                          const bestRarityIdx = userLibrary.filter(i => i.id === adId).reduce((best, i) => Math.max(best, RARITIES.findIndex(r => r.key === (i.rarity || "common"))), 0);
+                          const rar = RARITY_MAP[RARITIES[bestRarityIdx].key];
                           return (
                             <div key={adId} className="rarity-stat-item">
                               {ad.logoUrl
@@ -1820,7 +1799,7 @@ export default function AdSimulator() {
         {adState === "complete" && (
           <div className="modal-backdrop">
             {showNewCollectOverlay && currentAd ? (() => {
-              const rar = RARITY_MAP[currentAd.rarity || "common"];
+              const rar = rollTargetRarity || RARITY_MAP.common;
               const emojis = { common: "🎉", uncommon: "🌟", rare: "💎", epic: "✨", legendary: "🏆", mythic: "🔥" };
               return (
                 <div className="new-collect-card" style={{ border: `2px solid ${rar.color}66`, boxShadow: `0 0 60px ${rar.color}33, 0 32px 80px rgba(0,0,0,0.6)` }}>
@@ -1843,7 +1822,7 @@ export default function AdSimulator() {
               <div className="complete-modal">
                 <div className="complete-icon">✦</div>
                 <h2 className="complete-title">Credit Earned</h2>
-                {isAdminAd && (() => { const rar = RARITY_MAP[currentAd?.rarity || "common"]; return <span className="rarity-badge" style={{ color: rar.color, background: rar.color + "18", border: `1px solid ${rar.color}33`, marginBottom: "0.75rem" }}>{rar.label}</span>; })()}
+                {isAdminAd && rollTargetRarity && <span className="rarity-badge" style={{ color: rollTargetRarity.color, background: rollTargetRarity.color + "18", border: `1px solid ${rollTargetRarity.color}33`, marginBottom: "0.75rem" }}>{rollTargetRarity.label}</span>}
                 <p className="complete-sub">
                   Ad impression from {currentAd?.brand}<br />
                   was served successfully.
