@@ -525,6 +525,7 @@ export default function AdSimulator() {
   const [logoUploadState, setLogoUploadState] = useState("idle"); // "idle" | "uploading" | "error"
   const [adVideoSize, setAdVideoSize] = useState(null); // { w, h } natural video dimensions
   const [isPreview, setIsPreview] = useState(false);
+  const [expandedCollId, setExpandedCollId] = useState(null);
   const [userStats, setUserStats] = useState(BLANK_STATS());
   const [allUserStats, setAllUserStats] = useState({}); // uid -> stats, for leaderboard
 
@@ -1552,7 +1553,7 @@ export default function AdSimulator() {
                         const rar = RARITY_MAP[ad.rarity || "common"];
                         const qty = seen[item.id] || 1;
                         return (
-                          <div key={item.id} className="coll-card" style={{ position: "relative", overflow: "visible", cursor: "pointer", ...getRarityStyle(ad.rarity || "common") }} onClick={() => previewAd(ad, true)}>
+                          <div key={item.id} className="coll-card" style={{ position: "relative", overflow: "visible", cursor: ad.videoUrl ? "pointer" : "default", ...getRarityStyle(ad.rarity || "common") }} onClick={ad.videoUrl ? () => setExpandedCollId(expandedCollId === item.id ? null : item.id) : undefined}>
                             {rar.sparkle && <RaritySparkles color={rar.color} />}
                             {qty > 1 && <div className="qty-badge">×{qty}</div>}
                             <div style={{ borderRadius: "2px", overflow: "hidden", position: "relative", zIndex: 1 }}>
@@ -1572,6 +1573,15 @@ export default function AdSimulator() {
                                 </div>
                               </div>
                             </div>
+                            {expandedCollId === item.id && (
+                              <video
+                                src={ad.videoUrl}
+                                controls
+                                autoPlay
+                                style={{ width: "100%", display: "block", marginTop: "0.5rem", borderRadius: "2px", background: "#000", position: "relative", zIndex: 1 }}
+                                onClick={e => e.stopPropagation()}
+                              />
+                            )}
                           </div>
                         );
                       });
