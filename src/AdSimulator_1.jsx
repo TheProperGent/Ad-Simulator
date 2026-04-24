@@ -500,7 +500,7 @@ export default function AdSimulator() {
   const [adminAds, setAdminAds] = useState([]);
   const [userLibrary, setUserLibrary] = useState([]);
   const [adState, setAdState] = useState("idle");
-  const [isMuted, setIsMuted] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
   const [rollTargetRarity, setRollTargetRarity] = useState(null);
   const [wheelRotation, setWheelRotation] = useState(0);
   const [rollLanded, setRollLanded] = useState(false);
@@ -536,6 +536,7 @@ export default function AdSimulator() {
   const intervalRef = useRef(null);
   const adDurationRef = useRef(5000);
   const adStartRef = useRef(null);
+  const adVideoRef = useRef(null);
 
   useEffect(() => { currentUserRef.current = currentUser; }, [currentUser]);
   useEffect(() => { userLibraryRef.current = userLibrary; }, [userLibrary]);
@@ -720,6 +721,10 @@ export default function AdSimulator() {
     }
     return () => clearInterval(intervalRef.current);
   }, [adState]);
+
+  useEffect(() => {
+    if (adVideoRef.current) adVideoRef.current.muted = isMuted;
+  }, [isMuted]);
 
   const runAd = () => {
     if (adminAds.length === 0) return;
@@ -1731,6 +1736,7 @@ export default function AdSimulator() {
               </div>
               {currentAd.videoUrl ? (
                 <video
+                  ref={adVideoRef}
                   className="ad-video"
                   src={currentAd.videoUrl}
                   autoPlay
