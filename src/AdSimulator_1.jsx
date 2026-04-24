@@ -180,7 +180,10 @@ const styles = `
   .coll-banner-bg { position: absolute; inset: 0; }
   .coll-icon { font-size: 2rem; position: relative; z-index: 1; }
   .coll-brand { font-size: 1rem; font-weight: 800; letter-spacing: -0.02em; color: #fff; position: relative; z-index: 1; }
-  .coll-body { padding: 1rem 1rem 0.85rem; }
+  .coll-body { padding: 1rem 1rem 0.5rem; }
+  .coll-rarity-stack { display: flex; flex-direction: column; gap: 0.25rem; padding: 0 0.85rem 0.85rem; }
+  .coll-rarity-row { display: flex; align-items: center; justify-content: space-between; padding: 0.2rem 0.5rem; border-radius: 6px; }
+  .coll-rarity-count { font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; font-weight: 700; }
   .coll-tagline { font-family: 'Nunito', sans-serif; font-size: 0.78rem; font-weight: 600; color: #7e7e96; margin-bottom: 0.65rem; line-height: 1.4; }
   .coll-cat { font-family: 'Nunito', sans-serif; font-size: 0.7rem; font-weight: 700; color: #2a2a3c; letter-spacing: 0.06em; text-transform: uppercase; }
   .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; padding: 5rem 2rem; text-align: center; }
@@ -1521,19 +1524,22 @@ export default function AdSimulator() {
                 ) : (
                   <div className="collection-grid">
                     {(() => {
-                      const seen = {};
-                      userLibrary.forEach(item => { seen[item.id] = (seen[item.id] || 0) + 1; });
+                      const rarityBreakdown = {};
+                      userLibrary.forEach(item => {
+                        const key = item.rarity || "common";
+                        if (!rarityBreakdown[item.id]) rarityBreakdown[item.id] = {};
+                        rarityBreakdown[item.id][key] = (rarityBreakdown[item.id][key] || 0) + 1;
+                      });
                       const unique = userLibrary.filter((item, i, arr) => arr.findIndex(a => a.id === item.id) === i);
                       return unique.map(item => {
                         const ad = adminAds.find(a => a.id === item.id) || item;
-                        if (!ad.brand) return null; // deleted ad with no stored snapshot
-                        const bestRarityIdx = userLibrary.filter(i => i.id === item.id).reduce((best, i) => Math.max(best, RARITIES.findIndex(r => r.key === (i.rarity || "common"))), 0);
+                        if (!ad.brand) return null;
+                        const breakdown = rarityBreakdown[item.id] || {};
+                        const bestRarityIdx = RARITIES.reduce((best, r, i) => breakdown[r.key] ? Math.max(best, i) : best, 0);
                         const rar = RARITY_MAP[RARITIES[bestRarityIdx].key];
-                        const qty = seen[item.id] || 1;
                         return (
                           <div key={item.id} className="coll-card" style={{ position: "relative", overflow: "visible", cursor: ad.videoUrl ? "pointer" : "default", ...getRarityStyle(RARITIES[bestRarityIdx].key) }} onClick={ad.videoUrl ? () => setExpandedCollId(expandedCollId === item.id ? null : item.id) : undefined}>
                             {rar.sparkle && <RaritySparkles color={rar.color} />}
-                            {qty > 1 && <div className="qty-badge">×{qty}</div>}
                             <div style={{ borderRadius: "2px", overflow: "hidden", position: "relative", zIndex: 1 }}>
                               <div className="coll-banner" style={{ background: ad.color + "18" }}>
                                 <div className="coll-banner-bg" style={{ background: `radial-gradient(circle at 50% 50%, ${ad.color}, transparent 70%)`, opacity: 0.22, position: "absolute", inset: 0 }} />
@@ -1545,10 +1551,15 @@ export default function AdSimulator() {
                               </div>
                               <div className="coll-body">
                                 <div className="coll-tagline">{ad.tagline}</div>
-                                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                                  <span className="coll-cat">{ad.category}</span>
-                                  <span className="rarity-badge" style={{ color: rar.color, background: rar.color + "18", border: `1px solid ${rar.color}33` }}>{rar.label}</span>
-                                </div>
+                                <span className="coll-cat">{ad.category}</span>
+                              </div>
+                              <div className="coll-rarity-stack">
+                                {[...RARITIES].reverse().filter(r => breakdown[r.key]).map(r => (
+                                  <div key={r.key} className="coll-rarity-row" style={{ background: r.color + "0f" }}>
+                                    <span className="rarity-badge" style={{ color: r.color, background: r.color + "18", border: `1px solid ${r.color}33` }}>{r.label}</span>
+                                    <span className="coll-rarity-count" style={{ color: r.color }}>×{breakdown[r.key]}</span>
+                                  </div>
+                                ))}
                               </div>
                             </div>
                             {expandedCollId === item.id && (
